@@ -13,6 +13,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Scissors,
+  MapPin,
+  ShieldAlert,
+  Info,
 } from 'lucide-react';
 import { formatRp, isAsetRole, isPartRole, canBorrow } from '../data/mockData';
 import { StatusBadge } from './SharedUI';
@@ -73,12 +76,12 @@ function PhotoThumb({ src, alt, size = 'md' }) {
 
 function ActionIconButton({ icon: Icon, title, onClick, tone = 'slate' }) {
   const tones = {
-    slate: 'text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-50 border-slate-200',
-    sky: 'text-sky-600 hover:text-sky-700 bg-sky-50 hover:bg-sky-100 border-sky-100',
-    emerald: 'text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-100',
-    violet: 'text-violet-600 hover:text-violet-700 bg-violet-50 hover:bg-violet-100 border-violet-100',
-    orange: 'text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 border-orange-100',
-    red: 'text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100 border-red-100',
+    slate: 'text-slate-600 hover:text-slate-800 hover:bg-slate-100 border-slate-200',
+    sky: 'text-sky-600 hover:text-sky-700 hover:bg-sky-50 border-sky-200',
+    emerald: 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border-emerald-200',
+    violet: 'text-violet-600 hover:text-violet-700 hover:bg-violet-50 border-violet-200',
+    orange: 'text-orange-600 hover:text-orange-700 hover:bg-orange-50 border-orange-200',
+    red: 'text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200',
   };
 
   return (
@@ -86,7 +89,7 @@ function ActionIconButton({ icon: Icon, title, onClick, tone = 'slate' }) {
       type="button"
       onClick={onClick}
       title={title}
-      className={`p-2.5 rounded-xl border shadow-sm transition-all duration-200 hover:-translate-y-0.5 ${tones[tone]}`}
+      className={`p-2 rounded-lg border transition-colors ${tones[tone]}`}
     >
       <Icon size={15} />
     </button>
@@ -347,7 +350,7 @@ export function PisauDetailModal({ asset, borrowLogs, onClose, onEdit, onBorrow,
             {[
               ['info', 'Informasi'],
               ['jadwal', 'Jadwal Perawatan'],
-              ['pinjam', 'Histori Pinjam'],
+              ['pinjam', 'Riwayat Pinjam'],
             ].map(([id, label]) => (
               <button
                 key={id}
@@ -362,74 +365,150 @@ export function PisauDetailModal({ asset, borrowLogs, onClose, onEdit, onBorrow,
 
         <div className="p-6 overflow-y-auto flex-1">
           {tab === 'info' && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                  <div className="px-4 py-2 border-b border-slate-100 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Foto Utama Pisau</div>
-                  <div className="aspect-square bg-slate-100 flex items-center justify-center">
-                    {utama ? (
-                      <img src={utama} alt="Foto Utama" className="w-full h-full object-cover" />
-                    ) : (
-                      <Camera size={40} className="text-slate-300" />
-                    )}
-                  </div>
-                </div>
-                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                  <div className="px-4 py-2 border-b border-slate-100 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Hasil Penggunaan</div>
-                  <div className="aspect-square bg-slate-100 flex items-center justify-center">
-                    {asset.gambarHasil ? (
-                      <img src={asset.gambarHasil} alt="Hasil Penggunaan" className="w-full h-full object-cover" />
-                    ) : (
-                      <Camera size={40} className="text-slate-300" />
-                    )}
-                  </div>
-                </div>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 className="text-sm font-bold text-slate-700">Informasi Umum & Lokasi</h3>
+                <button onClick={onEdit} className="flex items-center gap-2 px-3 py-1.5 bg-sky-50 text-sky-700 border border-sky-200 rounded-lg text-xs font-medium hover:bg-sky-100 transition-colors">
+                  <Edit size={14} /> Ubah
+                </button>
               </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 text-sm">
+                  <div className="col-span-1 md:col-span-2 flex items-center gap-6 bg-slate-50 p-4 rounded-xl border border-slate-100 mb-2">
+                    <div className="w-24 h-24 bg-white rounded-xl border border-slate-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {utama ? (
+                        <img src={utama} alt={asset.nama} className="w-full h-full object-cover" />
+                      ) : (
+                        <Camera size={32} className="text-slate-300" />
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-800 text-base">{asset.nama}</h4>
+                      <p className="text-xs font-mono text-slate-500 mt-0.5 font-bold text-sky-700">{asset.kode}</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <StatusBadge type="kondisi" status={asset.kondisi} />
+                        {canBorrow(asset) ? (
+                          <StatusBadge type="peminjaman" status={asset.statusPinjam} />
+                        ) : (
+                          <span className="text-[11px] text-slate-500 italic">Part-only</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
 
-              <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4 text-sm shadow-sm">
-                <div className="grid grid-cols-2 gap-3">
-                  <div><span className="text-slate-500 text-xs">Peran Inventori</span><div className="mt-1"><PeranBadge peran={asset.peranInventori} /></div></div>
-                  <div><span className="text-slate-500 text-xs">Status Pinjam</span><div className="mt-1">{canBorrow(asset) ? <StatusBadge type="peminjaman" status={asset.statusPinjam} /> : <span className="text-slate-400 text-xs">Tidak dipinjamkan (Part only)</span>}</div></div>
-                  <div><span className="text-slate-500 text-xs">Kondisi</span><div className="mt-1"><StatusBadge type="kondisi" status={asset.kondisi} /></div></div>
-                  <div><span className="text-slate-500 text-xs">No. Seri</span><p className="font-mono font-medium mt-0.5 text-slate-800">{asset.noSeri || '-'}</p></div>
-                  <div><span className="text-slate-500 text-xs">No. Registrasi</span><p className="font-mono font-medium mt-0.5 text-slate-800">{asset.noRegistrasi || '-'}</p></div>
-                  <div><span className="text-slate-500 text-xs">Vendor</span><p className="font-medium mt-0.5">{asset.vendor || '-'}</p></div>
-                  <div><span className="text-slate-500 text-xs">Harga</span><p className="font-medium mt-0.5">{asset.hargaBeli ? formatRp(asset.hargaBeli) : '-'}</p></div>
-                </div>
-                <div className="rounded-xl border border-orange-100 bg-orange-50/60 px-3.5 py-2.5 text-xs text-orange-900">
-                  Update perbaikan di menu <span className="font-semibold">Perawatan</span>. Jadwal di tab <span className="font-semibold">Jadwal Perawatan</span>.
-                </div>
-                {asset.catatan && (
-                  <div className="pt-2 border-t border-slate-100">
-                    <span className="text-slate-500 text-xs">Catatan</span>
-                    <p className="mt-1 text-slate-700 bg-slate-50 border border-slate-100 rounded-lg p-2.5">{asset.catatan}</p>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Nama</span>
+                    <span className="font-medium text-slate-800 col-span-2">{asset.nama}</span>
                   </div>
-                )}
-                {isAsetRole(asset) && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-slate-100">
-                    <div><span className="text-slate-500 text-xs">Tgl Beli</span><p className="font-medium mt-0.5">{asset.tanggalBeli || '-'}</p></div>
-                    <div><span className="text-slate-500 text-xs">Garansi</span><p className="font-medium mt-0.5">{asset.tanggalGaransi || '-'}</p></div>
-                    <div><span className="text-slate-500 text-xs">Depresiasi</span><p className="font-medium mt-0.5">{asset.depresiasiType === 'Persen' ? `${asset.depresiasiValue || 0}% / thn` : (asset.depresiasiValue ? formatRp(asset.depresiasiValue) : '-')}</p></div>
-                    <div><span className="text-slate-500 text-xs">Masa Manfaat</span><p className="font-medium mt-0.5">{asset.masaManfaat ? `${asset.masaManfaat} tahun` : '-'}</p></div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Kondisi</span>
+                    <span className="col-span-2"><StatusBadge type="kondisi" status={asset.kondisi} /></span>
                   </div>
-                )}
-                <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
-                  {isAsetRole(asset) && <span className="text-[11px] px-2.5 py-1 rounded-full bg-blue-50 text-blue-700">Terhubung Data Aset · Pinjam</span>}
-                  {isPartRole(asset) && <span className="text-[11px] px-2.5 py-1 rounded-full bg-purple-50 text-purple-700">Terhubung Part · Bahan Kalkulasi</span>}
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-3 border-t border-slate-100">
-                  <div><span className="text-slate-500 text-xs">Ukuran</span><p className="font-medium">{asset.panjang}×{asset.lebar}×{asset.tinggi} mm</p></div>
-                  <div><span className="text-slate-500 text-xs">Laminasi</span><p className="font-medium">{asset.laminasi}</p></div>
-                  <div><span className="text-slate-500 text-xs">Mata Pisau</span><p className="font-medium">{asset.jumlahMata}</p></div>
-                  <div><span className="text-slate-500 text-xs">Unit</span><p className="font-medium">{asset.unit}</p></div>
-                  <div><span className="text-slate-500 text-xs">Merek</span><p className="font-medium">{asset.merk}</p></div>
-                  <div><span className="text-slate-500 text-xs">Produk</span><p className="font-medium">{asset.produk}</p></div>
-                  <div><span className="text-slate-500 text-xs">Bahan Baku</span><p className="font-medium">{asset.bahanBaku}</p></div>
-                  <div><span className="text-slate-500 text-xs">Gudang</span><p className="font-medium">{asset.gudang}</p></div>
-                </div>
-                <div>
-                  <span className="text-slate-500 text-xs">Fungsi</span>
-                  <div className="mt-1.5"><FungsiPills fungsi={asset.fungsi} /></div>
+                  <div className="col-span-1 md:col-span-2 rounded-xl border border-orange-100 bg-orange-50/60 px-3.5 py-2.5 text-xs text-orange-900">
+                    Update perbaikan aktif di menu <span className="font-semibold">Perawatan</span>. Jadwal diatur di tab <span className="font-semibold">Jadwal Perawatan</span>.
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Peran Inventori</span>
+                    <span className="font-medium text-slate-800 col-span-2"><PeranBadge peran={asset.peranInventori} /></span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Status Pinjam</span>
+                    <span className="col-span-2">{canBorrow(asset) ? <StatusBadge type="peminjaman" status={asset.statusPinjam} /> : <span className="text-slate-400 text-xs">Tidak dipinjamkan (Part only)</span>}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">No. Seri</span>
+                    <span className="font-mono text-slate-800 col-span-2">{asset.noSeri || '-'}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">No. Registrasi</span>
+                    <span className="font-mono text-slate-800 col-span-2">{asset.noRegistrasi || '-'}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Vendor</span>
+                    <span className="font-medium text-slate-800 col-span-2">{asset.vendor || '-'}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Nilai / Harga Beli</span>
+                    <span className="font-medium text-slate-800 col-span-2">{asset.hargaBeli ? formatRp(asset.hargaBeli) : '-'}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Tanggal Pembelian</span>
+                    <span className="font-medium text-slate-800 col-span-2">{asset.tanggalBeli || '-'}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Masa Garansi</span>
+                    <span className="font-semibold text-rose-700 col-span-2 flex items-center gap-1.5 bg-rose-50 px-2 py-1 rounded border border-rose-100 max-w-max">
+                      <ShieldAlert size={14} /> {asset.tanggalGaransi || 'Tidak Ada Garansi / Expired'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3 col-span-1 md:col-span-2">
+                    <span className="text-slate-500 col-span-1 font-semibold">Penempatan Lokasi</span>
+                    <div className="col-span-2 space-y-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                      <p className="font-bold text-slate-800 flex items-center gap-1.5 text-sm">
+                        <MapPin size={16} className="text-red-500" /> {asset.gudang || '-'}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="bg-white text-slate-700 px-2.5 py-1 rounded border border-slate-300 text-xs font-medium">
+                          Area: <strong className="text-slate-900">{asset.area || '-'}</strong>
+                        </span>
+                        <span className="bg-white text-slate-700 px-2.5 py-1 rounded border border-slate-300 text-xs font-medium">
+                          Rak: <strong className="text-slate-900">{asset.rak || '-'}</strong>
+                        </span>
+                        <span className="bg-white text-slate-700 px-2.5 py-1 rounded border border-slate-300 text-xs font-medium">
+                          Box: <strong className="text-slate-900">{asset.box || '-'}</strong>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Ukuran</span>
+                    <span className="font-medium text-slate-800 col-span-2">{asset.panjang ? `${asset.panjang}×${asset.lebar}×${asset.tinggi} mm` : '-'}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Laminasi</span>
+                    <span className="font-medium text-slate-800 col-span-2">{asset.laminasi || '-'}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Mata Pisau</span>
+                    <span className="font-medium text-slate-800 col-span-2">{asset.jumlahMata || '-'}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Unit</span>
+                    <span className="font-medium text-slate-800 col-span-2">{asset.unit || '-'}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Merek</span>
+                    <span className="font-medium text-slate-800 col-span-2">{asset.merk || '-'}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Produk</span>
+                    <span className="font-medium text-slate-800 col-span-2">{asset.produk || '-'}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Bahan Baku</span>
+                    <span className="font-medium text-slate-800 col-span-2">{asset.bahanBaku || '-'}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Fungsi</span>
+                    <span className="font-medium text-slate-800 col-span-2"><FungsiPills fungsi={asset.fungsi} /></span>
+                  </div>
+                  {isAsetRole(asset) && (
+                    <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                      <span className="text-slate-500 col-span-1">Depresiasi</span>
+                      <span className="font-medium text-slate-800 col-span-2 flex items-center gap-2">
+                        {asset.depresiasiType === 'Persen' ? `${asset.depresiasiValue || 0}% / thn` : (asset.depresiasiValue ? formatRp(asset.depresiasiValue) : '-')}
+                        <button onClick={() => setShowDepreciation(true)} className="text-sky-500 hover:bg-sky-50 p-1 rounded-full transition-colors" title="Lihat Tabel Depresiasi">
+                          <Info size={16} />
+                        </button>
+                      </span>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3 col-span-1 md:col-span-2">
+                    <span className="text-slate-500 col-span-1">Catatan</span>
+                    <span className="font-medium text-slate-800 col-span-2 bg-slate-100 p-2.5 rounded-lg border">{asset.catatan || '-'}</span>
+                  </div>
                 </div>
               </div>
             </div>

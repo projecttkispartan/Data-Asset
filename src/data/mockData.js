@@ -122,7 +122,6 @@ export const UNIT_OPTIONS = ['Pcs', 'Set'];
 export const PERAN_INVENTORI_OPTIONS = [
   { value: 'Aset', label: 'Aset', desc: 'Bisa dipinjam & diperbaiki' },
   { value: 'Part', label: 'Part', desc: 'Bahan kalkulasi / BOM' },
-  { value: 'Keduanya', label: 'Aset & Part', desc: 'Terhubung ke kedua modul' },
 ];
 
 export const STATUS_PERAWATAN_OPTIONS = [

@@ -250,7 +250,10 @@ export function PisauFormPage({ pisauToEdit, onClose, onSave }) {
   const [fungsiSelect, setFungsiSelect] = useState('');
   const [vendor, setVendor] = useState(pisauToEdit?.vendor || '');
   const [hargaBeli, setHargaBeli] = useState(pisauToEdit?.hargaBeli || '');
-  const [peranInventori, setPeranInventori] = useState(pisauToEdit?.peranInventori || 'Keduanya');
+  const [peranInventori, setPeranInventori] = useState(() => {
+    const value = pisauToEdit?.peranInventori;
+    return value === 'Keduanya' ? 'Aset' : (value === 'Aset' || value === 'Part' ? value : 'Aset');
+  });
   const [noSeri, setNoSeri] = useState(pisauToEdit?.noSeri || pisauToEdit?.kode || '');
   const [noRegistrasi, setNoRegistrasi] = useState(pisauToEdit?.noRegistrasi || '001');
   const [kondisi, setKondisi] = useState(pisauToEdit?.kondisi || 'Kondisi Baik');
@@ -274,7 +277,7 @@ export function PisauFormPage({ pisauToEdit, onClose, onSave }) {
   const [filesTambahan, setFilesTambahan] = useState(
     pisauToEdit?.filesTambahan || Object.fromEntries(FILE_TAMBAHAN_KATEGORI.map((k) => [k, []]))
   );
-  const showKeuangan = peranInventori === 'Aset' || peranInventori === 'Keduanya';
+  const showKeuangan = peranInventori === 'Aset' || pisauToEdit?.peranInventori === 'Keduanya';
 
   const addFungsi = (val) => {
     if (!val || fungsi.includes(val)) return;
@@ -449,7 +452,7 @@ export function PisauFormPage({ pisauToEdit, onClose, onSave }) {
             <div className="space-y-5">
               <div>
                 <label className={labelClass}>Peran Inventori *</label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {PERAN_INVENTORI_OPTIONS.map((opt) => {
                     const active = peranInventori === opt.value;
                     return (

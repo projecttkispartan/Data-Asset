@@ -137,9 +137,9 @@ function JadwalBadge({ jadwal }) {
 
 function ActionButton({ icon: Icon, title, onClick, tone = 'slate' }) {
   const tones = {
-    slate: 'text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-50 border-slate-200',
-    orange: 'text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 border-orange-100',
-    emerald: 'text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-100',
+    slate: 'text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-50 border-slate-200 shadow-slate-100',
+    orange: 'text-orange-600 hover:text-orange-700 bg-gradient-to-br from-orange-50 to-white hover:from-orange-100 hover:to-orange-50 border-orange-200 shadow-orange-100',
+    emerald: 'text-emerald-600 hover:text-emerald-700 bg-gradient-to-br from-emerald-50 to-white hover:from-emerald-100 hover:to-emerald-50 border-emerald-200 shadow-emerald-100',
   };
 
   return (
@@ -147,7 +147,7 @@ function ActionButton({ icon: Icon, title, onClick, tone = 'slate' }) {
       type="button"
       onClick={onClick}
       title={title}
-      className={`inline-flex items-center justify-center rounded-xl border p-2.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 ${tones[tone]}`}
+      className={`inline-flex items-center justify-center rounded-2xl border p-2.5 shadow-sm ring-1 ring-black/5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${tones[tone]}`}
     >
       <Icon size={15} />
     </button>
