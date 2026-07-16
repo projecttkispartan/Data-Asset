@@ -1,10 +1,6 @@
-# AsetKu — Full Flowchart Semua Kondisi
-
-```mermaid
 flowchart TD
   Start([User Buka AsetKu]) --> MainNav{Pilih Menu Utama}
 
-  %% ===== NAVIGASI =====
   MainNav -->|Beranda| Beranda[Beranda - Dalam Pengembangan]
   MainNav -->|Data Aset| AsetList
   MainNav -->|Pisau| PisauList
@@ -12,7 +8,6 @@ flowchart TD
   MainNav -->|Perawatan| MaintenanceList
   MainNav -->|Pengaturan| Pengaturan[Pengaturan - Dalam Pengembangan]
 
-  %% ===== NOTIFIKASI =====
   MainNav -.-> NotifCheck{Ada Notifikasi?}
   NotifCheck -->|Ya| NotifBadge[Badge angka merah]
   NotifBadge --> KlikNotif{Klik bell}
@@ -23,7 +18,6 @@ flowchart TD
   KlikItemNotif -->|Ke Perawatan| MaintenanceList
   KlikItemNotif -->|Tutup| MainNav
 
-  %% ===== DATA ASET =====
   AsetList[List Data Aset dan Sparepart]
   AsetList --> FilterKategori{Filter Kategori}
   FilterKategori -->|Semua| ShowAll[Tampilkan semua]
@@ -38,7 +32,6 @@ flowchart TD
 
   AsetTable --> AsetAction{Pilih Aksi}
 
-  %% --- Tambah Aset ---
   AsetAction -->|Tambah Baru| AsetForm[Form Aset/Sparepart]
   AsetForm --> PilihTipeAset{Pilih Tipe}
   PilihTipeAset --> AsetFields[Isi field wajib]
@@ -48,14 +41,12 @@ flowchart TD
   SaveAset --> RefreshAset[Refresh Tabel]
   RefreshAset --> AsetList
 
-  %% --- Edit Aset ---
   AsetAction -->|Edit| CheckKatEdit{kategori?}
   CheckKatEdit -->|Pisau| PisauForm
   CheckKatEdit -->|Aset/Sparepart| AsetFormEdit[Form Edit Aset]
   AsetFormEdit --> SaveAsetEdit[Update assets]
   SaveAsetEdit --> RefreshAset
 
-  %% --- Detail Aset ---
   AsetAction -->|Detail| CheckKatDetail{kategori?}
   CheckKatDetail -->|Pisau| PisauDetail
   CheckKatDetail -->|Aset/Sparepart| AsetDetail[Detail Aset]
@@ -67,17 +58,14 @@ flowchart TD
   JadwalTab -->|Simpan| UpdateJadwal[Update jadwalMaintenance]
   UpdateJadwal --> AsetDetail
 
-  %% --- Hapus ---
   AsetAction -->|Hapus| DelAsset[Hapus asset + logs terkait]
   DelAsset --> RefreshAset
 
-  %% --- Pinjam/Kembali dari tabel ---
   AsetAction -->|Pinjam/Kembali| CheckPinjam{statusPinjam?}
   CheckPinjam -->|Tersedia + canBorrow| BorrowModal
   CheckPinjam -->|Dipinjam/Terlambat + canBorrow| BorrowModal
   CheckPinjam -->|Tidak bisa pinjam| AsetTable
 
-  %% ===== PISAU =====
   PisauList[Pisau - List Khusus]
   PisauList --> PisauFilter[Filter peran]
   PisauFilter --> PisauTable[Tabel Pisau]
@@ -104,7 +92,6 @@ flowchart TD
   CheckPinjamPisau -->|Aset/Keduanya| BorrowModal
   CheckPinjamPisau -->|Part saja| PisauTable
 
-  %% ===== PEMINJAMAN =====
   PinjamList[List Peminjaman Aktif]
   PinjamList --> FilterPinjam{Filter Status}
   FilterPinjam -->|Dipinjam| ShowDipinjam[statusPinjam=Dipinjam]
@@ -118,7 +105,6 @@ flowchart TD
   PinjamAction -->|Kembali| BorrowModal
   PinjamAction -->|Pinjam Baru| BorrowModal
 
-  %% ===== FORM PEMINJAMAN =====
   BorrowModal[Form Peminjaman/Pengembalian]
   BorrowModal --> TxType{Jenis Transaksi?}
 
@@ -137,7 +123,6 @@ flowchart TD
   SetTersedia --> CloseLog[UPDATE borrowLogs: status=Dikembalikan]
   CloseLog --> RefreshAll
 
-  %% ===== PERAWATAN =====
   MaintenanceList[Perawatan - Log + Jadwal]
   MaintenanceList --> MaintTab{Tab}
   MaintTab -->|Log Perawatan| MaintLog[Tabel Maintenance Logs]
@@ -179,7 +164,6 @@ flowchart TD
   AturJadwal --> SimpanJadwal[Simpan ke assets]
   SimpanJadwal --> RefreshAll
 
-  %% ===== SUBGRAPH: STATUS TRANSITIONS =====
   subgraph StatusFlow[Status Transitions]
     direction LR
     SA[statusPinjam: Tersedia] -->|Pinjam| SB[Dipinjam]
@@ -188,7 +172,6 @@ flowchart TD
     SC -->|Kembali| SA
   end
 
-  %% ===== SUBGRAPH: KONDISI =====
   subgraph KondisiFlow[Kondisi Transitions]
     direction LR
     KA[Kondisi Baik] -->|Dalam Perbaikan| KB[Dalam Perbaikan]
@@ -196,7 +179,6 @@ flowchart TD
     KB -->|Rusak| KC[Rusak]
   end
 
-  %% ===== SUBGRAPH: STATUS PERAWATAN =====
   subgraph MaintFlow[Status Perawatan]
     direction LR
     MA[Normal] -->|Masalah| MB[Perlu Diperbaiki]
@@ -208,7 +190,6 @@ flowchart TD
     ME -->|Batal| MF[Dibatalkan]
   end
 
-  %% ===== SUBGRAPH: PERAN PISAU =====
   subgraph PisauRoles[Peran Inventori Pisau]
     direction TB
     PR{peranInventori?}
@@ -217,7 +198,6 @@ flowchart TD
     PR -->|Keduanya| PK[Bisa pinjam + kalkulasi]
   end
 
-  %% ===== SUBGRAPH: CAN BORROW =====
   subgraph BorrowLogic[canBorrow Logic]
     direction TB
     CB{kategori?}
@@ -228,7 +208,6 @@ flowchart TD
     CB2 -->|Part| CanNo[Tidak Bisa Pinjam]
   end
 
-  %% ===== SUBGRAPH: DEPRESIASI =====
   subgraph Depresiasi[Hitung Depresiasi]
     direction TB
     DD{depresiasiType?}
@@ -239,7 +218,6 @@ flowchart TD
     DTable --> DResult[Tabel: Tahun, Dep, Akumulasi, Sisa]
   end
 
-  %% ===== SUBGRAPH: FILTER =====
   subgraph FilterLogic[Filter Logic]
     direction TB
     FL{filter?}
@@ -249,7 +227,6 @@ flowchart TD
     FL -->|Pisau| FLD[kategori=Pisau]
   end
 
-  %% ===== SUBGRAPH: GUDANG =====
   subgraph GudangLogic[Gudang Logic]
     direction TB
     GL{pemilikAsset?}
@@ -275,4 +252,3 @@ flowchart TD
   class SaveAset,SavePisau,InsertLog,CloseLog,SetDipinjam,SetTersedia,SaveMaint action
   class BorrowModal modal
   class FilterKategori,TxType,CheckKatEdit,CheckKatDetail,ValAset,ValPisau,ValPinjam,CheckLokasi,CheckJadwal,CheckPinjam,CheckPinjamPisau decision
-```
