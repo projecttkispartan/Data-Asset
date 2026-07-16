@@ -220,7 +220,7 @@ export default function App() {
           <NavItem collapsed={isSidebarCollapsed} icon={<Box size={20} />} label="Data Aset & Sparepart" active={activeTab === 'data-aset'} onClick={() => switchTab('data-aset')} />
           <NavItem collapsed={isSidebarCollapsed} icon={<Scissors size={20} />} label="Pisau" active={activeTab === 'pisau'} onClick={() => switchTab('pisau')} />
           <NavItem collapsed={isSidebarCollapsed} icon={<Wrench size={20} />} label="Perawatan" active={activeTab === 'perawatan'} onClick={() => switchTab('perawatan')} />
-          <NavItem collapsed={isSidebarCollapsed} icon={<Settings size={20} />} label="Pengaturan" active={activeTab === 'pengaturan'} onClick={() => switchTab('pengaturan')} />
+          {/* <NavItem collapsed={isSidebarCollapsed} icon={<Settings size={20} />} label="Pengaturan" active={activeTab === 'pengaturan'} onClick={() => switchTab('pengaturan')} /> */}
         </nav>
       </aside>
 
