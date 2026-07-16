@@ -13,6 +13,10 @@ import {
   ChevronUp,
   AlertTriangle,
   CalendarClock,
+  Clock,
+  Info,
+  ShieldAlert,
+  Edit,
 } from 'lucide-react';
 import {
   STATUS_PERAWATAN_OPTIONS,
@@ -26,8 +30,11 @@ import {
   addDaysToDate,
   getJadwalMaintenanceStatus,
   getMaintenanceNotifications,
+  formatRp,
+  canBorrow,
 } from '../data/mockData';
-import { PerawatanBadge } from './SharedUI';
+import { PerawatanBadge, StatusBadge } from './SharedUI';
+import { BorrowLogTable } from './PisauView';
 
 function kategoriStyle(kategori) {
   if (kategori === 'Pisau') return 'bg-amber-100 text-amber-700';
@@ -116,6 +123,343 @@ function MaintenanceLogDetailModal({ log, onClose }) {
   );
 }
 
+export function JadwalHistoryTimeline({ asset, logs }) {
+  // Build timeline entries from maintenance logs
+  // Each log has: tanggalMulai (when started), tanggalSelesaiAktual/tanggalSelesai (when finished), estimasiSelesai
+  // The asset has: jadwalMaintenance (next scheduled date)
+  // We reverse-sort logs to show newest first, and pair scheduled vs actual
+  const entries = useMemo(() => {
+    if (!logs?.length) return [];
+    return logs
+      .filter((l) => l.tanggalMulai)
+      .sort((a, b) => String(b.tanggalMulai || '').localeCompare(String(a.tanggalMulai || '')))
+      .map((log, idx) => {
+        const aktual = log.tanggalSelesaiAktual || log.tanggalSelesai;
+        return {
+          id: log.id || idx,
+          status: log.status,
+          pic: log.pic,
+          tanggalMulai: log.tanggalMulai,
+          estimasiSelesai: log.estimasiSelesai,
+          tanggalAktual: aktual,
+          lokasi: log.lokasiTipe === 'Eksternal' ? log.vendorNama || 'Eksternal' : 'Internal',
+          kendala: log.kendala,
+        };
+      });
+  }, [logs]);
+
+  // Next schedule from asset
+  const nextSchedule = asset?.jadwalMaintenance;
+
+  if (!entries.length && !nextSchedule) {
+    return (
+      <div className="text-center text-slate-400 py-8 text-sm border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+        Belum ada riwayat jadwal perawatan.
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-2 bg-slate-50/50">
+        <Clock size={16} className="text-orange-600" />
+        <h3 className="text-sm font-bold text-slate-700">Riwayat Jadwal Perawatan</h3>
+      </div>
+      <div className="p-5">
+        {/* Next schedule highlight */}
+        {nextSchedule && (
+          <div className="mb-4 flex items-center gap-3 p-3 rounded-xl border border-dashed border-orange-300 bg-orange-50/60">
+            <div className="w-3 h-3 rounded-full bg-orange-500 shrink-0 animate-pulse" />
+            <div>
+              <p className="text-xs font-semibold text-orange-800">Jadwal Berikutnya</p>
+              <p className="text-sm font-bold text-orange-900">{nextSchedule}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Timeline entries */}
+        {entries.length > 0 && (
+          <div className="relative pl-6">
+            {/* Vertical line */}
+            <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-slate-200" />
+
+            <div className="space-y-4">
+              {entries.map((entry, idx) => {
+                const isSelesai = entry.status === 'Selesai Diperbaiki';
+                const isTerlambat = entry.tanggalAktual && entry.estimasiSelesai && entry.tanggalAktual > entry.estimasiSelesai;
+                return (
+                  <div key={entry.id} className="relative">
+                    {/* Dot */}
+                    <div className={`absolute -left-6 top-1.5 w-3.5 h-3.5 rounded-full border-2 ${
+                      isSelesai
+                        ? 'bg-emerald-500 border-emerald-200'
+                        : entry.status === 'Dalam Perbaikan'
+                          ? 'bg-orange-500 border-orange-200'
+                          : 'bg-slate-400 border-slate-200'
+                    }`} />
+
+                    <div className="rounded-lg border border-slate-200 bg-white p-3 hover:shadow-sm transition-shadow">
+                      <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                        <PerawatanBadge status={entry.status} />
+                        <span className="text-[11px] font-semibold text-slate-600">{entry.pic}</span>
+                        <span className="text-[10px] text-slate-400">•</span>
+                        <span className="text-[10px] text-slate-500">{entry.lokasi}</span>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-[11px]">
+                        <div>
+                          <span className="text-slate-400">Dijadwalkan mulai</span>
+                          <p className="font-semibold text-slate-800">{entry.tanggalMulai}</p>
+                        </div>
+                        <div>
+                          <span className="text-slate-400">Estimasi selesai</span>
+                          <p className="font-semibold text-slate-800">{entry.estimasiSelesai || '-'}</p>
+                        </div>
+                        <div>
+                          <span className="text-slate-400">Aktual selesai</span>
+                          <p className={`font-semibold ${isTerlambat ? 'text-red-600' : isSelesai ? 'text-emerald-600' : 'text-slate-800'}`}>
+                            {entry.tanggalAktual || 'Belum selesai'}
+                            {isTerlambat && <span className="ml-1 text-[10px] font-normal text-red-500">(terlambat)</span>}
+                          </p>
+                        </div>
+                      </div>
+                      {entry.kendala && (
+                        <p className="mt-1.5 text-[10px] text-amber-700 bg-amber-50 rounded px-2 py-1 border border-amber-100">
+                          ⚠ {entry.kendala}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function MaintenanceDetailModal({ asset, maintenanceLogs, borrowLogs, onClose, onEdit, onUpdatePerbaikan, onSaveJadwal }) {
+  const [tab, setTab] = useState('info');
+  if (!asset) return null;
+
+  const logs = borrowLogs?.filter((l) => l.assetId === asset.id) || [];
+  const itemLogs = maintenanceLogs
+    .filter((l) => l.assetId === asset.id)
+    .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+
+  const latestLog = itemLogs[0] || null;
+  const fotoUtama = asset.fotoUtama || asset.gambar || null;
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center z-50 p-4 overflow-y-auto">
+      <div className="bg-[#f4f7fb] rounded-3xl shadow-2xl w-full max-w-4xl my-8 flex flex-col max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-slate-200/80 flex justify-between items-center bg-white">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 tracking-tight">{asset.nama}</h2>
+            <p className="text-xs font-mono text-orange-600 font-bold mt-0.5">{asset.kode}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <PerawatanBadge status={asset.statusPerawatan} />
+            <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 text-xl leading-none">&times;</button>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="px-6 pt-3 bg-white border-b border-slate-200">
+          <div className="flex gap-1">
+            {[
+              ['info', 'Informasi'],
+              ['jadwal', 'Jadwal & Perawatan'],
+              ['pinjam', 'Riwayat Pinjam'],
+            ].map(([id, label]) => (
+              <button
+                key={id}
+                onClick={() => setTab(id)}
+                className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${tab === id ? 'border-orange-600 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 overflow-y-auto flex-1">
+          {/* Tab: Informasi */}
+          {tab === 'info' && (
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 className="text-sm font-bold text-slate-700">Informasi Umum & Lokasi</h3>
+                <button onClick={onEdit} className="flex items-center gap-2 px-3 py-1.5 bg-orange-50 text-orange-700 border border-orange-200 rounded-lg text-xs font-medium hover:bg-orange-100 transition-colors">
+                  <Edit size={14} /> Ubah
+                </button>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 text-sm">
+                  {/* Photo + Name */}
+                  <div className="col-span-1 md:col-span-2 flex items-center gap-6 bg-slate-50 p-4 rounded-xl border border-slate-100 mb-2">
+                    <div className="w-24 h-24 bg-white rounded-xl border border-slate-200 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {fotoUtama ? (
+                        <img src={fotoUtama} alt={asset.nama} className="w-full h-full object-cover" />
+                      ) : (
+                        <Camera size={32} className="text-slate-300" />
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-800 text-base">{asset.nama}</h4>
+                      <p className="text-xs font-mono text-orange-600 font-bold mt-0.5">{asset.kode}</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <StatusBadge type="kondisi" status={asset.kondisi} />
+                        <PerawatanBadge status={asset.statusPerawatan} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Fields */}
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Nama</span>
+                    <span className="font-medium text-slate-800 col-span-2">{asset.nama}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Kategori</span>
+                    <span className="font-medium text-slate-800 col-span-2">{asset.kategori}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Kondisi</span>
+                    <span className="col-span-2"><StatusBadge type="kondisi" status={asset.kondisi} /></span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Status Perawatan</span>
+                    <span className="col-span-2"><PerawatanBadge status={asset.statusPerawatan} /></span>
+                  </div>
+
+                  <div className="col-span-1 md:col-span-2 rounded-xl border border-orange-100 bg-orange-50/60 px-3.5 py-2.5 text-xs text-orange-900">
+                    Update perbaikan aktif di tab <span className="font-semibold">Jadwal & Perawatan</span>. Klik &quot;Catat Perbaikan&quot; untuk mencatat perbaikan baru.
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Tipe Aset</span>
+                    <span className="font-medium text-slate-800 col-span-2">{asset.tipe || '-'}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Pemilik Aset</span>
+                    <span className="font-medium text-slate-800 col-span-2">{asset.pemilikAsset || '-'}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Vendor</span>
+                    <span className="font-medium text-slate-800 col-span-2">{asset.vendor || '-'}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Nilai / Harga Beli</span>
+                    <span className="font-medium text-slate-800 col-span-2">{asset.hargaBeli ? formatRp(asset.hargaBeli) : '-'}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Tanggal Pembelian</span>
+                    <span className="font-medium text-slate-800 col-span-2">{asset.tanggalBeli || '-'}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Masa Garansi</span>
+                    <span className="font-semibold text-rose-700 col-span-2 flex items-center gap-1.5 bg-rose-50 px-2 py-1 rounded border border-rose-100 max-w-max">
+                      <ShieldAlert size={14} /> {asset.tanggalGaransi || 'Tidak Ada Garansi / Expired'}
+                    </span>
+                  </div>
+
+                  {/* Lokasi */}
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3 col-span-1 md:col-span-2">
+                    <span className="text-slate-500 col-span-1 font-semibold">Penempatan Lokasi</span>
+                    <div className="col-span-2 space-y-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                      <p className="font-bold text-slate-800 flex items-center gap-1.5 text-sm">
+                        <MapPin size={16} className="text-red-500" /> {asset.gudang || '-'}
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="bg-white text-slate-700 px-2.5 py-1 rounded border border-slate-300 text-xs font-medium">
+                          Area: <strong className="text-slate-900">{asset.area || '-'}</strong>
+                        </span>
+                        <span className="bg-white text-slate-700 px-2.5 py-1 rounded border border-slate-300 text-xs font-medium">
+                          Rak: <strong className="text-slate-900">{asset.rak || '-'}</strong>
+                        </span>
+                        <span className="bg-white text-slate-700 px-2.5 py-1 rounded border border-slate-300 text-xs font-medium">
+                          Box: <strong className="text-slate-900">{asset.box || '-'}</strong>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Status Pinjam */}
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Status Pinjam</span>
+                    <span className="col-span-2">{canBorrow(asset) ? <StatusBadge type="peminjaman" status={asset.statusPinjam} /> : <span className="text-slate-400 text-xs">Tidak dipinjamkan</span>}</span>
+                  </div>
+
+                  {/* PIC terakhir */}
+                  {latestLog && (
+                    <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                      <span className="text-slate-500 col-span-1">PIC Terakhir</span>
+                      <span className="font-medium text-slate-800 col-span-2">{latestLog.pic || '-'}</span>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3 col-span-1 md:col-span-2">
+                    <span className="text-slate-500 col-span-1">Catatan</span>
+                    <span className="font-medium text-slate-800 col-span-2 bg-slate-100 p-2.5 rounded-lg border">{asset.catatan || '-'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tab: Jadwal & Perawatan */}
+          {tab === 'jadwal' && (
+            <div className="space-y-4">
+              <JadwalPerawatanTab
+                asset={asset}
+                onSave={(updated) => onSaveJadwal?.(updated)}
+              />
+              <JadwalHistoryTimeline asset={asset} logs={itemLogs} />
+              {/* Log perawatan */}
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                  <div className="flex items-center gap-2">
+                    <History size={16} className="text-orange-600" />
+                    <h3 className="text-sm font-bold text-slate-700">Riwayat Perbaikan</h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onUpdatePerbaikan}
+                    className="text-xs font-semibold text-orange-700 bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-lg hover:bg-orange-100"
+                  >
+                    Catat Perbaikan
+                  </button>
+                </div>
+                <div className="p-5">
+                  <MaintenanceLogList logs={itemLogs} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tab: Riwayat Pinjam */}
+          {tab === 'pinjam' && <BorrowLogTable logs={logs} />}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-slate-200 flex justify-between bg-white">
+          <button
+            type="button"
+            onClick={onUpdatePerbaikan}
+            className="px-4 py-2 text-sm font-semibold bg-orange-600 text-white rounded-xl hover:bg-orange-700 flex items-center gap-1.5"
+          >
+            <Wrench size={14} /> Catat Perbaikan
+          </button>
+          <button onClick={onClose} className="px-5 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50">Kembali</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function JadwalBadge({ jadwal }) {
   const status = getJadwalMaintenanceStatus(jadwal);
   if (!jadwal || status === 'none') {
@@ -154,7 +498,7 @@ function ActionButton({ icon: Icon, title, onClick, tone = 'slate' }) {
   );
 }
 
-function MaintenanceLogList({ logs, defaultExpanded = false, onViewDetails }) {
+export function MaintenanceLogList({ logs, defaultExpanded = false, onViewDetails }) {
   const [openId, setOpenId] = useState(defaultExpanded && logs?.[0] ? logs[0].id : null);
 
   if (!logs?.length) {
@@ -800,7 +1144,7 @@ export function MaintenanceLogModal({ asset, maintenanceLogs, onClose, onUpdate 
   );
 }
 
-export function MaintenanceView({ assets, maintenanceLogs, onOpenForm, onViewLog }) {
+export function MaintenanceView({ assets, maintenanceLogs, borrowLogs, onOpenForm, onViewLog }) {
   const [filterStatus, setFilterStatus] = useState('Semua');
   const [search, setSearch] = useState('');
 
@@ -851,19 +1195,6 @@ export function MaintenanceView({ assets, maintenanceLogs, onOpenForm, onViewLog
           <Plus size={16} /> Catat Perbaikan
         </button>
       </div>
-
-      {notifs.length > 0 && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-          <div className="flex items-center gap-2 text-amber-900 shrink-0">
-            <AlertTriangle size={18} className="text-amber-600" />
-            <span className="text-sm font-semibold">{notifs.length} item perlu maintenance</span>
-          </div>
-          <p className="text-xs text-amber-800/90 flex-1">
-            {notifs.slice(0, 3).map((n) => n.kode).join(', ')}
-            {notifs.length > 3 ? ` +${notifs.length - 3} lainnya` : ''}
-          </p>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[

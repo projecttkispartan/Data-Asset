@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   LayoutDashboard, 
   Box, 
@@ -27,13 +27,14 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowRightLeft,
+  History,
 } from 'lucide-react';
 import { formatRp, gudangOptionsByOwner, mockAssets, mockBorrowLogs, mockMaintenanceLogs, matchesKategoriFilter, canBorrow, isAsetRole, isPartRole, getMaintenanceNotifications } from './data/mockData';
 import { DataPisauView, PisauDetailModal, PisauLogModal } from './components/PisauView';
 import { PisauFormPage } from './components/PisauFormPage';
 import { AssetFormPage } from './components/AssetFormPage';
 import { PeminjamanView } from './components/PeminjamanView';
-import { MaintenanceView, MaintenanceFormModal, MaintenanceLogModal, JadwalPerawatanTab } from './components/MaintenanceView';
+import { MaintenanceView, MaintenanceFormModal, MaintenanceDetailModal, JadwalPerawatanTab, JadwalHistoryTimeline, MaintenanceLogList } from './components/MaintenanceView';
 import { StatusBadge } from './components/SharedUI';
 
 export default function App() {
@@ -400,6 +401,7 @@ export default function App() {
             <MaintenanceView
               assets={assets}
               maintenanceLogs={maintenanceLogs}
+              borrowLogs={borrowLogs}
               onOpenForm={openMaintenanceForm}
               onViewLog={openMaintenanceLog}
             />
@@ -426,13 +428,14 @@ export default function App() {
       {showDownloadModal && <DownloadModal onClose={() => setShowDownloadModal(false)} />}
       
       {showDetailModal && selectedAsset?.kategori !== 'Pisau' && (
-        <AssetDetailModal 
+        <AssetDetailModal
           asset={selectedAsset}
-          onClose={() => setShowDetailModal(false)} 
+          maintenanceLogs={maintenanceLogs}
+          onClose={() => setShowDetailModal(false)}
           onEdit={() => {
             setShowDetailModal(false);
             openEdit(selectedAsset);
-          }} 
+          }}
           onBorrow={() => {
             setShowDetailModal(false);
             setShowBorrowModal(true);
@@ -486,16 +489,24 @@ export default function App() {
       )}
 
       {showMaintenanceLog && selectedAsset && (
-        <MaintenanceLogModal
+        <MaintenanceDetailModal
           asset={selectedAsset}
           maintenanceLogs={maintenanceLogs}
+          borrowLogs={borrowLogs}
           onClose={() => {
             setShowMaintenanceLog(false);
             setSelectedAsset(null);
           }}
-          onUpdate={() => {
+          onEdit={() => {
+            setShowMaintenanceLog(false);
+            openEdit(selectedAsset);
+          }}
+          onUpdatePerbaikan={() => {
             setShowMaintenanceLog(false);
             openMaintenanceForm(selectedAsset);
+          }}
+          onSaveJadwal={(updated) => {
+            handleUpdateAsset(updated);
           }}
         />
       )}
@@ -661,9 +672,16 @@ function DataAsetView({ assets, onAdd, onBorrow, onViewDetail, onDownload, onEdi
   );
 }
 
-function AssetDetailModal({ asset, onClose, onEdit, onBorrow, onSaveJadwal }) {
+function AssetDetailModal({ asset, maintenanceLogs, onClose, onEdit, onBorrow, onSaveJadwal }) {
   const [showDepreciation, setShowDepreciation] = useState(false);
   const [tab, setTab] = useState('info');
+
+  const itemLogs = useMemo(() => {
+    if (!asset) return [];
+    return (maintenanceLogs || [])
+      .filter((l) => l.assetId === asset.id)
+      .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+  }, [maintenanceLogs, asset]);
 
   if (!asset) return null;
 
@@ -680,7 +698,7 @@ function AssetDetailModal({ asset, onClose, onEdit, onBorrow, onSaveJadwal }) {
           <div className="flex gap-1">
             {[
               ['info', 'Informasi'],
-              ['jadwal', 'Jadwal Perawatan'],
+              ['jadwal', 'Jadwal & Perawatan'],
               ['pinjam', 'Riwayat Pinjam'],
             ].map(([id, label]) => (
               <button
@@ -708,7 +726,6 @@ function AssetDetailModal({ asset, onClose, onEdit, onBorrow, onSaveJadwal }) {
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 text-sm">
-                
                 <div className="col-span-1 md:col-span-2 flex items-center gap-6 bg-slate-50 p-4 rounded-xl border border-slate-100 mb-2">
                   <div className="w-24 h-24 bg-white rounded-xl border border-slate-200 flex items-center justify-center overflow-hidden flex-shrink-0">
                     {(asset.fotoUtama || asset.gambar) ? (
@@ -722,6 +739,11 @@ function AssetDetailModal({ asset, onClose, onEdit, onBorrow, onSaveJadwal }) {
                     <p className="text-xs font-mono text-slate-500 mt-0.5 font-bold text-blue-700">{asset.kode}</p>
                     <div className="mt-2 flex flex-wrap gap-2">
                       <StatusBadge type="kondisi" status={asset.kondisi} />
+                      {canBorrow(asset) ? (
+                        <StatusBadge type="peminjaman" status={asset.statusPinjam} />
+                      ) : (
+                        <span className="text-[11px] text-slate-500 italic">Part-only</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -735,22 +757,48 @@ function AssetDetailModal({ asset, onClose, onEdit, onBorrow, onSaveJadwal }) {
                   <span className="col-span-2"><StatusBadge type="kondisi" status={asset.kondisi} /></span>
                 </div>
                 <div className="col-span-1 md:col-span-2 rounded-xl border border-orange-100 bg-orange-50/60 px-3.5 py-2.5 text-xs text-orange-900">
-                  Update perbaikan aktif di menu <span className="font-semibold">Perawatan</span>. Jadwal diatur di tab <span className="font-semibold">Jadwal Perawatan</span>.
+                  Update perbaikan aktif di menu <span className="font-semibold">Perawatan</span>. Jadwal diatur di tab <span className="font-semibold">Jadwal & Perawatan</span>.
                 </div>
                 <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
-                  <span className="text-slate-500 col-span-1">Tipe Aset</span>
-                  <span className="font-medium text-slate-800 col-span-2">{asset.tipe}</span>
+                  <span className="text-slate-500 col-span-1">Peran Inventori</span>
+                  <span className="font-medium text-slate-800 col-span-2">{asset.peranInventori || asset.tipe || '-'}</span>
                 </div>
                 <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
-                  <span className="text-slate-500 col-span-1">Pemilik Aset</span>
-                  <span className="font-bold text-blue-700 col-span-2">{asset.pemilikAsset}</span>
+                  <span className="text-slate-500 col-span-1">Status Pinjam</span>
+                  <span className="col-span-2">{canBorrow(asset) ? <StatusBadge type="peminjaman" status={asset.statusPinjam} /> : <span className="text-slate-400 text-xs">Tidak dipinjamkan (Part only)</span>}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                  <span className="text-slate-500 col-span-1">No. Seri</span>
+                  <span className="font-mono text-slate-800 col-span-2">{asset.noSeri || '-'}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                  <span className="text-slate-500 col-span-1">No. Registrasi</span>
+                  <span className="font-mono text-slate-800 col-span-2">{asset.noRegistrasi || '-'}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                  <span className="text-slate-500 col-span-1">Vendor</span>
+                  <span className="font-medium text-slate-800 col-span-2">{asset.vendor || '-'}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                  <span className="text-slate-500 col-span-1">Nilai / Harga Beli</span>
+                  <span className="font-medium text-slate-800 col-span-2">{asset.hargaBeli ? formatRp(asset.hargaBeli) : '-'}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                  <span className="text-slate-500 col-span-1">Tanggal Pembelian</span>
+                  <span className="font-medium text-slate-800 col-span-2">{asset.tanggalBeli || '-'}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                  <span className="text-slate-500 col-span-1">Masa Garansi</span>
+                  <span className="font-semibold text-rose-700 col-span-2 flex items-center gap-1.5 bg-rose-50 px-2 py-1 rounded border border-rose-100 max-w-max">
+                    <ShieldAlert size={14} /> {asset.tanggalGaransi || 'Tidak Ada Garansi / Expired'}
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3 col-span-1 md:col-span-2">
                   <span className="text-slate-500 col-span-1 font-semibold">Penempatan Lokasi</span>
                   <div className="col-span-2 space-y-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
                     <p className="font-bold text-slate-800 flex items-center gap-1.5 text-sm">
-                      <MapPin size={16} className="text-red-500" /> {asset.gudang}
+                      <MapPin size={16} className="text-red-500" /> {asset.gudang || '-'}
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <span className="bg-white text-slate-700 px-2.5 py-1 rounded border border-slate-300 text-xs font-medium">
@@ -766,42 +814,51 @@ function AssetDetailModal({ asset, onClose, onEdit, onBorrow, onSaveJadwal }) {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                  <span className="text-slate-500 col-span-1">Ukuran</span>
+                  <span className="font-medium text-slate-800 col-span-2">{asset.panjang ? `${asset.panjang}×${asset.lebar}×${asset.tinggi} mm` : '-'}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                  <span className="text-slate-500 col-span-1">Laminasi</span>
+                  <span className="font-medium text-slate-800 col-span-2">{asset.laminasi || '-'}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                  <span className="text-slate-500 col-span-1">Mata Pisau</span>
+                  <span className="font-medium text-slate-800 col-span-2">{asset.jumlahMata || '-'}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                  <span className="text-slate-500 col-span-1">Unit</span>
+                  <span className="font-medium text-slate-800 col-span-2">{asset.unit || '-'}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                  <span className="text-slate-500 col-span-1">Merek</span>
+                  <span className="font-medium text-slate-800 col-span-2">{asset.merk || '-'}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                  <span className="text-slate-500 col-span-1">Produk</span>
+                  <span className="font-medium text-slate-800 col-span-2">{asset.produk || '-'}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                  <span className="text-slate-500 col-span-1">Bahan Baku</span>
+                  <span className="font-medium text-slate-800 col-span-2">{asset.bahanBaku || '-'}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                  <span className="text-slate-500 col-span-1">Fungsi</span>
+                  <span className="font-medium text-slate-800 col-span-2">{asset.fungsi?.length ? asset.fungsi.join(', ') : '-'}</span>
+                </div>
                 {(asset.kategori === 'Aset' || asset.kategori === 'Sparepart') && (
-                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3 items-center">
-                    <span className="text-slate-500 col-span-1">Nilai Depresiasi</span>
+                  <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
+                    <span className="text-slate-500 col-span-1">Depresiasi</span>
                     <span className="font-medium text-slate-800 col-span-2 flex items-center gap-2">
-                      {asset.depresiasiType === 'Persen' ? `${asset.depresiasiValue}% per Tahun` : formatRp(asset.depresiasiValue)}
+                      {asset.depresiasiType === 'Persen' ? `${asset.depresiasiValue || 0}% / thn` : (asset.depresiasiValue ? formatRp(asset.depresiasiValue) : '-')}
                       <button onClick={() => setShowDepreciation(true)} className="text-blue-500 hover:bg-blue-50 p-1 rounded-full transition-colors" title="Lihat Tabel Depresiasi">
                         <Info size={16} />
                       </button>
                     </span>
                   </div>
                 )}
-                <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
-                  <span className="text-slate-500 col-span-1">Nomor Seri</span>
-                  <span className="font-mono text-slate-800 col-span-2">{asset.noSeri}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
-                  <span className="text-slate-500 col-span-1">Masa Garansi</span>
-                  <span className="font-semibold text-rose-700 col-span-2 flex items-center gap-1.5 bg-rose-50 px-2 py-1 rounded border border-rose-100 max-w-max">
-                    <ShieldAlert size={14} /> {asset.tanggalGaransi || 'Tidak Ada Garansi / Expired'}
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
-                  <span className="text-slate-500 col-span-1">Vendor</span>
-                  <span className="font-medium text-slate-800 col-span-2">{asset.vendor || '-'}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
-                  <span className="text-slate-500 col-span-1">Nilai / Harga Beli</span>
-                  <span className="font-medium text-slate-800 col-span-2">{formatRp(asset.hargaBeli)}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
-                  <span className="text-slate-500 col-span-1">Tanggal Pembelian</span>
-                  <span className="font-medium text-slate-800 col-span-2">{asset.tanggalBeli || '-'}</span>
-                </div>
-
                 <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3 col-span-1 md:col-span-2">
-                  <span className="text-slate-500 col-span-1">Catatan Aset</span>
+                  <span className="text-slate-500 col-span-1">Catatan</span>
                   <span className="font-medium text-slate-800 col-span-2 bg-slate-100 p-2.5 rounded-lg border">{asset.catatan || '-'}</span>
                 </div>
               </div>
@@ -810,12 +867,25 @@ function AssetDetailModal({ asset, onClose, onEdit, onBorrow, onSaveJadwal }) {
           )}
 
           {tab === 'jadwal' && (
-            <JadwalPerawatanTab
-              asset={asset}
-              onSave={(updated) => {
-                onSaveJadwal?.(updated);
-              }}
-            />
+            <div className="space-y-4">
+              <JadwalPerawatanTab
+                asset={asset}
+                onSave={(updated) => {
+                  onSaveJadwal?.(updated);
+                }}
+              />
+              <JadwalHistoryTimeline asset={asset} logs={itemLogs} />
+              {/* Log perawatan */}
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-2 bg-slate-50/50">
+                  <History size={16} className="text-orange-600" />
+                  <h3 className="text-sm font-bold text-slate-700">Riwayat Perbaikan</h3>
+                </div>
+                <div className="p-5">
+                  <MaintenanceLogList logs={itemLogs} />
+                </div>
+              </div>
+            </div>
           )}
 
           {tab === 'pinjam' && (

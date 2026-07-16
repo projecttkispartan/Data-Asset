@@ -335,27 +335,24 @@ export function PisauDetailModal({ asset, borrowLogs, onClose, onEdit, onBorrow,
   const utama = getFotoUtama(asset);
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center z-50 p-4 overflow-y-auto">
-      <div className="bg-[#f4f7fb] rounded-3xl shadow-2xl w-full max-w-4xl my-8 flex flex-col max-h-[90vh] overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200/80 flex justify-between items-center bg-white">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900 tracking-tight">{asset.nama}</h2>
-            <p className="text-xs font-mono text-sky-600 font-bold mt-0.5">{asset.kode}</p>
-          </div>
-          <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 text-xl leading-none">&times;</button>
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex justify-center items-center z-50 p-4 overflow-y-auto">
+      <div className="bg-slate-50 rounded-2xl shadow-xl w-full max-w-5xl my-8 flex flex-col max-h-[90vh] overflow-hidden">
+        <div className="px-8 py-5 border-b border-slate-200 flex justify-between items-center bg-white sticky top-0 z-10">
+          <h2 className="text-xl font-bold text-slate-800 tracking-tight uppercase">{asset.nama}</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-2 text-2xl leading-none">&times;</button>
         </div>
 
-        <div className="px-6 pt-3 bg-white border-b border-slate-200">
+        <div className="px-8 pt-3 bg-white border-b border-slate-200">
           <div className="flex gap-1">
             {[
               ['info', 'Informasi'],
-              ['jadwal', 'Jadwal Perawatan'],
+              ['jadwal', 'Jadwal & Perawatan'],
               ['pinjam', 'Riwayat Pinjam'],
             ].map(([id, label]) => (
               <button
                 key={id}
                 onClick={() => setTab(id)}
-                className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${tab === id ? 'border-sky-600 text-sky-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${tab === id ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
               >
                 {label}
               </button>
@@ -363,12 +360,12 @@ export function PisauDetailModal({ asset, borrowLogs, onClose, onEdit, onBorrow,
           </div>
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1">
+        <div className="p-8 overflow-y-auto space-y-6 flex-1">
           {tab === 'info' && (
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                 <h3 className="text-sm font-bold text-slate-700">Informasi Umum & Lokasi</h3>
-                <button onClick={onEdit} className="flex items-center gap-2 px-3 py-1.5 bg-sky-50 text-sky-700 border border-sky-200 rounded-lg text-xs font-medium hover:bg-sky-100 transition-colors">
+                <button onClick={onEdit} className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-xs font-medium hover:bg-blue-100 transition-colors">
                   <Edit size={14} /> Ubah
                 </button>
               </div>
@@ -384,7 +381,7 @@ export function PisauDetailModal({ asset, borrowLogs, onClose, onEdit, onBorrow,
                     </div>
                     <div>
                       <h4 className="font-bold text-slate-800 text-base">{asset.nama}</h4>
-                      <p className="text-xs font-mono text-slate-500 mt-0.5 font-bold text-sky-700">{asset.kode}</p>
+                      <p className="text-xs font-mono text-slate-500 mt-0.5 font-bold text-blue-700">{asset.kode}</p>
                       <div className="mt-2 flex flex-wrap gap-2">
                         <StatusBadge type="kondisi" status={asset.kondisi} />
                         {canBorrow(asset) ? (
@@ -405,11 +402,11 @@ export function PisauDetailModal({ asset, borrowLogs, onClose, onEdit, onBorrow,
                     <span className="col-span-2"><StatusBadge type="kondisi" status={asset.kondisi} /></span>
                   </div>
                   <div className="col-span-1 md:col-span-2 rounded-xl border border-orange-100 bg-orange-50/60 px-3.5 py-2.5 text-xs text-orange-900">
-                    Update perbaikan aktif di menu <span className="font-semibold">Perawatan</span>. Jadwal diatur di tab <span className="font-semibold">Jadwal Perawatan</span>.
+                    Update perbaikan aktif di menu <span className="font-semibold">Perawatan</span>. Jadwal diatur di tab <span className="font-semibold">Jadwal & Perawatan</span>.
                   </div>
                   <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
                     <span className="text-slate-500 col-span-1">Peran Inventori</span>
-                    <span className="font-medium text-slate-800 col-span-2"><PeranBadge peran={asset.peranInventori} /></span>
+                    <span className="font-medium text-slate-800 col-span-2">{asset.peranInventori || asset.tipe || '-'}</span>
                   </div>
                   <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
                     <span className="text-slate-500 col-span-1">Status Pinjam</span>
@@ -492,14 +489,14 @@ export function PisauDetailModal({ asset, borrowLogs, onClose, onEdit, onBorrow,
                   </div>
                   <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
                     <span className="text-slate-500 col-span-1">Fungsi</span>
-                    <span className="font-medium text-slate-800 col-span-2"><FungsiPills fungsi={asset.fungsi} /></span>
+                    <span className="font-medium text-slate-800 col-span-2">{asset.fungsi?.length ? asset.fungsi.join(', ') : '-'}</span>
                   </div>
-                  {isAsetRole(asset) && (
+                  {(asset.kategori === 'Aset' || asset.kategori === 'Sparepart') && (
                     <div className="grid grid-cols-3 gap-4 border-b border-slate-50 pb-3">
                       <span className="text-slate-500 col-span-1">Depresiasi</span>
                       <span className="font-medium text-slate-800 col-span-2 flex items-center gap-2">
                         {asset.depresiasiType === 'Persen' ? `${asset.depresiasiValue || 0}% / thn` : (asset.depresiasiValue ? formatRp(asset.depresiasiValue) : '-')}
-                        <button onClick={() => setShowDepreciation(true)} className="text-sky-500 hover:bg-sky-50 p-1 rounded-full transition-colors" title="Lihat Tabel Depresiasi">
+                        <button onClick={() => setShowDepreciation(true)} className="text-blue-500 hover:bg-blue-50 p-1 rounded-full transition-colors" title="Lihat Tabel Depresiasi">
                           <Info size={16} />
                         </button>
                       </span>
@@ -524,18 +521,8 @@ export function PisauDetailModal({ asset, borrowLogs, onClose, onEdit, onBorrow,
           {tab === 'pinjam' && <BorrowLogTable logs={logs} />}
         </div>
 
-        <div className="px-6 py-4 border-t border-slate-200 flex justify-between bg-white">
-          <div className="flex gap-2">
-            <button onClick={onEdit} className="px-4 py-2 text-sm font-medium bg-sky-50 text-sky-700 border border-sky-100 rounded-xl hover:bg-sky-100 flex items-center gap-1.5">
-              <Edit size={14} /> Ubah
-            </button>
-            {(canBorrow(asset) && (asset.statusPinjam === 'Tersedia' || asset.statusPinjam === 'Dipinjam' || asset.statusPinjam === 'Terlambat')) && (
-              <button onClick={onBorrow} className={`px-4 py-2 text-sm font-semibold rounded-xl flex items-center gap-1.5 ${asset.statusPinjam === 'Tersedia' ? 'bg-sky-600 text-white hover:bg-sky-700' : 'bg-orange-500 text-white hover:bg-orange-600'}`}>
-                {asset.statusPinjam === 'Tersedia' ? <><ArrowRightLeft size={14} /> Pinjam</> : <><CornerDownLeft size={14} /> Kembalikan</>}
-              </button>
-            )}
-          </div>
-          <button onClick={onClose} className="px-5 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50">Kembali</button>
+        <div className="px-8 py-4 border-t border-slate-200 flex justify-end bg-white sticky bottom-0 z-10">
+          <button onClick={onClose} className="px-6 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200">Kembali</button>
         </div>
       </div>
     </div>
