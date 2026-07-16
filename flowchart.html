@@ -171,8 +171,8 @@ flowchart TD
   AsetList[List Data Aset dan Sparepart]
   AsetList --> FilterKategori{Filter Kategori}
   FilterKategori -->|Semua| ShowAll[Tampilkan semua]
-  FilterKategori -->|Aset| ShowAset[kategori=Aset atau Pisau+peranAset]
-  FilterKategori -->|Sparepart| ShowPart[kategori=Sparepart atau Pisau+peranPart]
+  FilterKategori -->|Aset| ShowAset[kategori=Aset atau Pisau + peranAset]
+  FilterKategori -->|Sparepart| ShowPart[kategori=Sparepart atau Pisau + peranPart]
   FilterKategori -->|Pisau| ShowPisau[kategori=Pisau]
 
   ShowAll --> AsetTable[Tabel Data]
@@ -182,7 +182,7 @@ flowchart TD
 
   AsetTable --> AsetAction{Pilih Aksi}
 
-  AsetAction -->|Tambah Baru| AsetForm[Form Aset/Sparepart]
+  AsetAction -->|Tambah Baru| AsetForm[Form Aset / Sparepart]
   AsetForm --> PilihTipeAset{Pilih Tipe}
   PilihTipeAset --> AsetFields[Isi field wajib]
   AsetFields --> ValAset{Validasi?}
@@ -193,13 +193,13 @@ flowchart TD
 
   AsetAction -->|Edit| CheckKatEdit{kategori?}
   CheckKatEdit -->|Pisau| PisauForm[Form Pisau]
-  CheckKatEdit -->|Aset/Sparepart| AsetFormEdit[Form Edit Aset]
+  CheckKatEdit -->|Aset / Sparepart| AsetFormEdit[Form Edit Aset]
   AsetFormEdit --> SaveAsetEdit[Update assets]
   SaveAsetEdit --> RefreshAset
 
   AsetAction -->|Detail| CheckKatDetail{kategori?}
   CheckKatDetail -->|Pisau| PisauDetail[Detail Pisau]
-  CheckKatDetail -->|Aset/Sparepart| AsetDetail[Detail Aset]
+  CheckKatDetail -->|Aset / Sparepart| AsetDetail[Detail Aset]
   AsetDetail --> DetailTab{Pilih Tab}
   DetailTab -->|Informasi| InfoAset[Data Umum + Lokasi + Depresiasi]
   DetailTab -->|Jadwal| JadwalTab[Jadwal Perawatan]
@@ -211,7 +211,7 @@ flowchart TD
   AsetAction -->|Hapus| DelAsset[Hapus asset + logs terkait]
   DelAsset --> RefreshAset
 
-  AsetAction -->|Pinjam/Kembali| CheckPinjam{statusPinjam?}
+  AsetAction -->|Pinjam / Kembali| CheckPinjam{statusPinjam?}
   CheckPinjam -->|Tersedia + canBorrow| BorrowModal[BorrowModal]
   CheckPinjam -->|Dipinjam atau Terlambat + canBorrow| BorrowModal
   CheckPinjam -->|Tidak bisa pinjam| AsetTable
@@ -308,8 +308,8 @@ flowchart TD
 flowchart TD
   PinjamList[List Peminjaman Aktif]
   PinjamList --> FilterPinjam{Filter Status}
-  FilterPinjam -->|Dipinjam| ShowDipinjam[statusPinjam=Dipinjam]
-  FilterPinjam -->|Terlambat| ShowTerlambat[statusPinjam=Terlambat]
+  FilterPinjam -->|Dipinjam| ShowDipinjam[statusPinjam = Dipinjam]
+  FilterPinjam -->|Terlambat| ShowTerlambat[statusPinjam = Terlambat]
   FilterPinjam -->|Semua Aktif| ShowAllPinjam[Dipinjam + Terlambat]
   ShowDipinjam --> PinjamTable[Tabel Peminjaman]
   ShowTerlambat --> PinjamTable
@@ -477,7 +477,7 @@ flowchart TB
   subgraph Depresiasi[Hitung Depresiasi]
     direction TB
     DD{depresiasiType?}
-    DD -->|Persen| DP[depTahunan = hargaBeli x nilai%]
+    DD -->|Persen| DP[depTahunan = hargaBeli x nilai persen]
     DD -->|Nominal| DN[depTahunan = nilai flat]
     DP --> DTable[Loop 1 s.d. masaManfaat]
     DN --> DTable
@@ -488,8 +488,8 @@ flowchart TB
     direction TB
     FL{filter?}
     FL -->|Semua| FLA[Tampilkan semua]
-    FL -->|Aset| FLB[kategori=Aset atau Pisau+peranAset]
-    FL -->|Sparepart| FLC[kategori=Sparepart atau Pisau+peranPart]
+    FL -->|Aset| FLB[kategori=Aset atau Pisau + peranAset]
+    FL -->|Sparepart| FLC[kategori=Sparepart atau Pisau + peranPart]
     FL -->|Pisau| FLD[kategori=Pisau]
   end
 
