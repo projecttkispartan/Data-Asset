@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { 
   LayoutDashboard, 
   Box, 
-  ArrowRightLeft, 
   Settings, 
   Plus, 
   Download, 
@@ -25,6 +24,9 @@ import {
   Scissors,
   Wrench,
   Bell,
+  ChevronLeft,
+  ChevronRight,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { formatRp, gudangOptionsByOwner, mockAssets, mockBorrowLogs, mockMaintenanceLogs, matchesKategoriFilter, canBorrow, isAsetRole, isPartRole, getMaintenanceNotifications } from './data/mockData';
 import { DataPisauView, PisauDetailModal, PisauLogModal } from './components/PisauView';
@@ -46,6 +48,7 @@ export default function App() {
   const [showMaintenanceForm, setShowMaintenanceForm] = useState(false);
   const [showMaintenanceLog, setShowMaintenanceLog] = useState(false);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [assets, setAssets] = useState(mockAssets);
   const [borrowLogs, setBorrowLogs] = useState(mockBorrowLogs);
@@ -195,17 +198,28 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans text-slate-800">
-      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col shrink-0">
-        <div className="h-16 flex items-center px-6 border-b border-slate-200">
-          <span className="text-xl font-bold text-blue-600 tracking-tight">Aset<span className="text-slate-800">Ku</span></span>
+      <aside className={`bg-white border-r border-slate-200 flex flex-col shrink-0 transition-all duration-200 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}>
+        <div className={`h-16 flex items-center border-b border-slate-200 ${isSidebarCollapsed ? 'justify-center px-0' : 'px-6'}`}>
+          <span className={`font-bold text-blue-600 tracking-tight ${isSidebarCollapsed ? 'text-lg' : 'text-xl'}`}>
+            {isSidebarCollapsed ? 'A' : 'Aset'}<span className="text-slate-800">{isSidebarCollapsed ? '' : 'Ku'}</span>
+          </span>
         </div>
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          <NavItem icon={<LayoutDashboard size={20} />} label="Beranda" active={activeTab === 'beranda'} onClick={() => switchTab('beranda')} />
-          <NavItem icon={<Box size={20} />} label="Data Aset & Sparepart" active={activeTab === 'data-aset'} onClick={() => switchTab('data-aset')} />
-          <NavItem icon={<Scissors size={20} />} label="Pisau" active={activeTab === 'pisau'} onClick={() => switchTab('pisau')} />
-          <NavItem icon={<ArrowRightLeft size={20} />} label="Peminjaman" active={activeTab === 'peminjaman'} onClick={() => switchTab('peminjaman')} />
-          <NavItem icon={<Wrench size={20} />} label="Perawatan" active={activeTab === 'perawatan'} onClick={() => switchTab('perawatan')} />
-          <NavItem icon={<Settings size={20} />} label="Pengaturan" active={activeTab === 'pengaturan'} onClick={() => switchTab('pengaturan')} />
+        <div className="p-2 border-b border-slate-100">
+          <button
+            type="button"
+            onClick={() => setIsSidebarCollapsed((v) => !v)}
+            className="w-full flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+            title={isSidebarCollapsed ? 'Buka sidebar' : 'Sembunyikan sidebar'}
+          >
+            {isSidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          </button>
+        </div>
+        <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+          <NavItem collapsed={isSidebarCollapsed} icon={<LayoutDashboard size={20} />} label="Beranda" active={activeTab === 'beranda'} onClick={() => switchTab('beranda')} />
+          <NavItem collapsed={isSidebarCollapsed} icon={<Box size={20} />} label="Data Aset & Sparepart" active={activeTab === 'data-aset'} onClick={() => switchTab('data-aset')} />
+          <NavItem collapsed={isSidebarCollapsed} icon={<Scissors size={20} />} label="Pisau" active={activeTab === 'pisau'} onClick={() => switchTab('pisau')} />
+          <NavItem collapsed={isSidebarCollapsed} icon={<Wrench size={20} />} label="Perawatan" active={activeTab === 'perawatan'} onClick={() => switchTab('perawatan')} />
+          <NavItem collapsed={isSidebarCollapsed} icon={<Settings size={20} />} label="Pengaturan" active={activeTab === 'pengaturan'} onClick={() => switchTab('pengaturan')} />
         </nav>
       </aside>
 
@@ -1169,10 +1183,15 @@ function DownloadModal({ onClose }) {
 }
 
 // --- KOMPONEN BANTUAN ---
-function NavItem({ icon, label, active, onClick }) {
+function NavItem({ icon, label, active, onClick, collapsed = false }) {
   return (
-    <button onClick={onClick} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${active ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}>
-      {icon} {label}
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center rounded-lg text-sm font-medium transition-colors ${collapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2.5'} ${active ? 'bg-blue-50 text-blue-700' : 'text-slate-600 hover:bg-slate-50'}`}
+      title={label}
+    >
+      {icon}
+      {!collapsed && <span>{label}</span>}
     </button>
   );
 }

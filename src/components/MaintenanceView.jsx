@@ -135,6 +135,25 @@ function JadwalBadge({ jadwal }) {
   );
 }
 
+function ActionButton({ icon: Icon, title, onClick, tone = 'slate' }) {
+  const tones = {
+    slate: 'text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-50 border-slate-200',
+    orange: 'text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 border-orange-100',
+    emerald: 'text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-100',
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      className={`inline-flex items-center justify-center rounded-xl border p-2.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 ${tones[tone]}`}
+    >
+      <Icon size={15} />
+    </button>
+  );
+}
+
 function MaintenanceLogList({ logs, defaultExpanded = false, onViewDetails }) {
   const [openId, setOpenId] = useState(defaultExpanded && logs?.[0] ? logs[0].id : null);
 
@@ -202,16 +221,15 @@ function MaintenanceLogList({ logs, defaultExpanded = false, onViewDetails }) {
                 </div>
               </button>
               {onViewDetails && (
-                <button
-                  type="button"
+                <ActionButton
+                  icon={Eye}
+                  title="Lihat detail"
+                  tone="orange"
                   onClick={(e) => {
                     e.stopPropagation();
                     onViewDetails(log);
                   }}
-                  className="shrink-0 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-slate-600 hover:bg-slate-50"
-                >
-                  Detail
-                </button>
+                />
               )}
             </div>
 
@@ -828,7 +846,7 @@ export function MaintenanceView({ assets, maintenanceLogs, onOpenForm, onViewLog
         <button
           type="button"
           onClick={() => onOpenForm(null)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-orange-600 text-white text-sm font-semibold rounded-xl hover:bg-orange-700 shadow-sm"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-orange-600 text-white text-sm font-semibold rounded-xl hover:bg-orange-700 shadow-sm transition-all hover:-translate-y-0.5"
         >
           <Plus size={16} /> Catat Perbaikan
         </button>
@@ -848,22 +866,17 @@ export function MaintenanceView({ assets, maintenanceLogs, onOpenForm, onViewLog
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl border bg-amber-50 border-amber-100">
-          <p className="text-[10px] font-bold uppercase text-slate-600">Perlu Diperbaiki</p>
-          <p className="text-2xl font-bold text-slate-800 mt-1">{stats.perlu}</p>
-        </div>
-        <div className="p-4 rounded-xl border bg-orange-50 border-orange-100">
-          <p className="text-[10px] font-bold uppercase text-slate-600">Dalam Perbaikan</p>
-          <p className="text-2xl font-bold text-slate-800 mt-1">{stats.dalam}</p>
-        </div>
-        <div className="p-4 rounded-xl border bg-sky-50 border-sky-100">
-          <p className="text-[10px] font-bold uppercase text-slate-600">Selesai Diperbaiki</p>
-          <p className="text-2xl font-bold text-slate-800 mt-1">{stats.selesai}</p>
-        </div>
-        <div className="p-4 rounded-xl border bg-red-50 border-red-100">
-          <p className="text-[10px] font-bold uppercase text-slate-600">Jadwal Due / Terlewat</p>
-          <p className="text-2xl font-bold text-slate-800 mt-1">{stats.jadwalDue}</p>
-        </div>
+        {[
+          { label: 'Perlu Diperbaiki', value: stats.perlu, tone: 'bg-amber-50 border-amber-100' },
+          { label: 'Dalam Perbaikan', value: stats.dalam, tone: 'bg-orange-50 border-orange-100' },
+          { label: 'Selesai Diperbaiki', value: stats.selesai, tone: 'bg-sky-50 border-sky-100' },
+          { label: 'Jadwal Due / Terlewat', value: stats.jadwalDue, tone: 'bg-red-50 border-red-100' },
+        ].map((card) => (
+          <div key={card.label} className={`p-4 rounded-2xl border shadow-sm ${card.tone}`}>
+            <p className="text-[10px] font-bold uppercase text-slate-600">{card.label}</p>
+            <p className="text-2xl font-bold text-slate-800 mt-1">{card.value}</p>
+          </div>
+        ))}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">

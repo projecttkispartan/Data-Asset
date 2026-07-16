@@ -71,6 +71,28 @@ function PhotoThumb({ src, alt, size = 'md' }) {
   );
 }
 
+function ActionIconButton({ icon: Icon, title, onClick, tone = 'slate' }) {
+  const tones = {
+    slate: 'text-slate-600 hover:text-slate-800 bg-white hover:bg-slate-50 border-slate-200',
+    sky: 'text-sky-600 hover:text-sky-700 bg-sky-50 hover:bg-sky-100 border-sky-100',
+    emerald: 'text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-100',
+    violet: 'text-violet-600 hover:text-violet-700 bg-violet-50 hover:bg-violet-100 border-violet-100',
+    orange: 'text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100 border-orange-100',
+    red: 'text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100 border-red-100',
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      className={`p-2.5 rounded-xl border shadow-sm transition-all duration-200 hover:-translate-y-0.5 ${tones[tone]}`}
+    >
+      <Icon size={15} />
+    </button>
+  );
+}
+
 export function DataPisauView({
   assets,
   onAdd,
@@ -180,67 +202,6 @@ export function DataPisauView({
         <span className="text-sm text-slate-500 px-2">{filtered.length} ditemukan</span>
       </div>
 
-      {/* Kalkulasi Part — dari pisau yang berperan Part */}
-      <section className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-        <div className="px-5 py-3.5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-gradient-to-r from-purple-50 to-white">
-          <div>
-            <h3 className="text-sm font-bold text-slate-800">Kalkulasi Part (Pisau)</h3>
-            <p className="text-xs text-slate-500">Pakai pisau dengan peran Part / Keduanya sebagai bahan hitung biaya.</p>
-          </div>
-          <select
-            className="text-sm border border-slate-200 rounded-xl px-3 py-2 bg-white max-w-xs"
-            value=""
-            onChange={(e) => { addCalcPart(e.target.value); e.target.value = ''; }}
-          >
-            <option value="">+ Tambah part ke kalkulasi...</option>
-            {partOptions.map((p) => (
-              <option key={p.id} value={p.id}>{p.kode} — {p.nama} ({formatRp(p.hargaBeli || 0)})</option>
-            ))}
-          </select>
-        </div>
-        {calcItems.length === 0 ? (
-          <p className="px-5 py-6 text-sm text-slate-400 text-center">Belum ada part dipilih. Pisau ber-peran Part muncul di sini.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-[11px] uppercase text-slate-500">
-                <tr>
-                  <th className="px-4 py-2.5 text-left">Kode</th>
-                  <th className="px-4 py-2.5 text-left">Nama</th>
-                  <th className="px-4 py-2.5 text-right">Harga</th>
-                  <th className="px-4 py-2.5 text-center">Qty</th>
-                  <th className="px-4 py-2.5 text-right">Subtotal</th>
-                  <th className="px-4 py-2.5 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {calcItems.map((c) => (
-                  <tr key={c.id}>
-                    <td className="px-4 py-2.5 font-mono text-xs font-bold text-purple-700">{c.kode}</td>
-                    <td className="px-4 py-2.5">{c.nama}</td>
-                    <td className="px-4 py-2.5 text-right tabular-nums">{formatRp(c.harga)}</td>
-                    <td className="px-4 py-2.5 text-center">
-                      <input type="number" min={1} value={c.qty} onChange={(e) => updateCalcQty(c.id, e.target.value)} className="w-16 text-center border border-slate-200 rounded-lg py-1" />
-                    </td>
-                    <td className="px-4 py-2.5 text-right font-semibold tabular-nums">{formatRp(c.harga * c.qty)}</td>
-                    <td className="px-4 py-2.5 text-right">
-                      <button type="button" onClick={() => removeCalc(c.id)} className="text-red-500 hover:bg-red-50 p-1.5 rounded-lg"><Trash2 size={14} /></button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr className="bg-purple-50/50">
-                  <td colSpan={4} className="px-4 py-3 text-right text-sm font-semibold text-slate-700">Total Kalkulasi</td>
-                  <td className="px-4 py-3 text-right text-base font-bold text-purple-800 tabular-nums">{formatRp(calcTotal)}</td>
-                  <td />
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        )}
-      </section>
-
       <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap min-w-[1200px]">
@@ -305,31 +266,19 @@ export function DataPisauView({
                     )}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <div className="inline-flex items-center rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-                      <button onClick={() => onViewDetail(pisau)} className="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 border-r border-slate-100" title="Detail">
-                        <Eye size={15} />
-                      </button>
+                    <div className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-slate-50/80 p-1.5 shadow-inner">
+                      <ActionIconButton icon={Eye} title="Detail" onClick={() => onViewDetail(pisau)} tone="slate" />
                       {canBorrow(pisau) && (
-                        <button onClick={() => onViewLogs(pisau)} className="p-2 text-slate-500 hover:text-violet-600 hover:bg-violet-50 border-r border-slate-100" title="Log">
-                          <History size={15} />
-                        </button>
+                        <ActionIconButton icon={History} title="Log" onClick={() => onViewLogs(pisau)} tone="violet" />
                       )}
                       {canBorrow(pisau) && pisau.statusPinjam === 'Tersedia' && (
-                        <button onClick={() => onBorrow(pisau)} className="p-2 text-sky-600 hover:bg-sky-50 border-r border-slate-100" title="Pinjam">
-                          <ArrowRightLeft size={15} />
-                        </button>
+                        <ActionIconButton icon={ArrowRightLeft} title="Pinjam" onClick={() => onBorrow(pisau)} tone="sky" />
                       )}
                       {canBorrow(pisau) && (pisau.statusPinjam === 'Dipinjam' || pisau.statusPinjam === 'Terlambat') && (
-                        <button onClick={() => onBorrow(pisau)} className="p-2 text-orange-600 hover:bg-orange-50 border-r border-slate-100" title="Kembalikan">
-                          <CornerDownLeft size={15} />
-                        </button>
+                        <ActionIconButton icon={CornerDownLeft} title="Kembalikan" onClick={() => onBorrow(pisau)} tone="orange" />
                       )}
-                      <button onClick={() => onEdit(pisau)} className="p-2 text-emerald-600 hover:bg-emerald-50 border-r border-slate-100" title="Edit">
-                        <Edit size={15} />
-                      </button>
-                      <button onClick={() => onDelete(pisau.id)} className="p-2 text-red-500 hover:bg-red-50" title="Hapus">
-                        <Trash2 size={15} />
-                      </button>
+                      <ActionIconButton icon={Edit} title="Edit" onClick={() => onEdit(pisau)} tone="emerald" />
+                      <ActionIconButton icon={Trash2} title="Hapus" onClick={() => onDelete(pisau.id)} tone="red" />
                     </div>
                   </td>
                 </tr>
