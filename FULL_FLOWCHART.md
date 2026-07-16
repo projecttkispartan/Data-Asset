@@ -24,7 +24,7 @@ flowchart TD
   KlikItemNotif -->|Tutup| MainNav
 
   %% ===== DATA ASET =====
-  AsetList[List Data Aset & Sparepart]
+  AsetList[List Data Aset dan Sparepart]
   AsetList --> FilterKategori{Filter Kategori}
   FilterKategori -->|Semua| ShowAll[Tampilkan semua]
   FilterKategori -->|Aset| ShowAset[kategori=Aset atau Pisau+peranAset]
