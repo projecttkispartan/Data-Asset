@@ -3,124 +3,171 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AsetKu — Full Flowchart</title>
+  <title>AsetKu — Flowchart</title>
   <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: #f1f5f9;
-      min-height: 100vh;
-    }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f1f5f9; }
+
+    /* HEADER */
     .header {
-      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-      color: #fff;
-      padding: 20px 32px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      background: linear-gradient(135deg, #1e40af, #3b82f6);
+      color: #fff; padding: 20px 32px;
+      display: flex; align-items: center; justify-content: space-between;
       box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
-    .header h1 { font-size: 1.4rem; font-weight: 700; }
-    .header span { font-size: 0.85rem; opacity: 0.8; }
+    .header h1 { font-size: 1.3rem; }
+    .header span { font-size: 0.8rem; opacity: 0.8; }
+
+    /* TABS */
+    .tabs {
+      display: flex; gap: 0; background: #fff;
+      border-bottom: 2px solid #e2e8f0;
+      overflow-x: auto; padding: 0 16px;
+    }
+    .tab-btn {
+      padding: 12px 20px; border: none; background: none;
+      font-size: 0.85rem; font-weight: 600; color: #64748b;
+      cursor: pointer; white-space: nowrap;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover { color: #334155; background: #f8fafc; }
+    .tab-btn.active { color: #1e40af; border-bottom-color: #3b82f6; }
+
+    /* SECTIONS */
+    .section { display: none; padding: 24px; }
+    .section.active { display: block; }
+    .section-title {
+      font-size: 1.1rem; font-weight: 700; color: #1e293b;
+      margin-bottom: 16px; padding-bottom: 8px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .section-desc {
+      font-size: 0.85rem; color: #64748b; margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    /* CHART */
+    .chart-wrap {
+      background: #fff; border-radius: 12px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+      padding: 24px; overflow-x: auto;
+      display: flex; justify-content: center;
+    }
+    .mermaid { min-width: fit-content; }
+    .mermaid svg { max-width: none !important; }
+
+    /* CONTROLS */
     .controls {
-      display: flex;
-      gap: 8px;
-      align-items: center;
+      display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap;
     }
     .controls button {
-      padding: 6px 14px;
-      border: 1px solid rgba(255,255,255,0.3);
-      background: rgba(255,255,255,0.15);
-      color: #fff;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.8rem;
-      transition: background 0.2s;
+      padding: 5px 12px; border: 1px solid #cbd5e1;
+      background: #fff; color: #475569; border-radius: 6px;
+      cursor: pointer; font-size: 0.75rem; transition: all 0.2s;
     }
-    .controls button:hover { background: rgba(255,255,255,0.3); }
+    .controls button:hover { background: #f1f5f9; border-color: #94a3b8; }
+
+    /* LEGEND */
     .legend {
-      display: flex;
-      gap: 16px;
-      padding: 12px 32px;
-      background: #fff;
-      border-bottom: 1px solid #e2e8f0;
-      flex-wrap: wrap;
+      display: flex; gap: 14px; flex-wrap: wrap;
+      margin-bottom: 16px;
     }
     .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.75rem;
-      color: #475569;
+      display: flex; align-items: center; gap: 5px;
+      font-size: 0.72rem; color: #475569;
     }
-    .legend-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 3px;
-    }
-    .chart-container {
-      padding: 24px;
-      overflow: auto;
-      display: flex;
-      justify-content: center;
-    }
-    .mermaid {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.08);
-      padding: 32px;
-      min-width: fit-content;
-    }
-    .mermaid svg {
-      max-width: none !important;
-    }
+    .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div>
-      <h1>AsetKu — Full Flowchart Semua Kondisi</h1>
-      <span>Data Aset, Sparepart, Pisau, Peminjaman, Perawatan</span>
-    </div>
-    <div class="controls">
-      <button onclick="zoomIn()">Zoom +</button>
-      <button onclick="zoomOut()">Zoom -</button>
-      <button onclick="resetZoom()">Reset</button>
-      <button onclick="downloadSVG()">Download SVG</button>
-    </div>
-  </div>
 
+<div class="header">
+  <div>
+    <h1>AsetKu — Flowchart</h1>
+    <span>Data Aset, Sparepart, Pisau, Peminjaman, Perawatan</span>
+  </div>
+</div>
+
+<div class="tabs" id="tabs">
+  <button class="tab-btn active" data-tab="nav">Navigasi & Notifikasi</button>
+  <button class="tab-btn" data-tab="aset">Data Aset</button>
+  <button class="tab-btn" data-tab="pisau">Pisau</button>
+  <button class="tab-btn" data-tab="pinjam">Peminjaman</button>
+  <button class="tab-btn" data-tab="rawat">Perawatan</button>
+  <button class="tab-btn" data-tab="status">Status & Logic</button>
+</div>
+
+<!-- ========== 1. NAVIGASI ========== -->
+<div class="section active" id="sec-nav">
+  <div class="section-title">1. Navigasi Utama & Notifikasi</div>
+  <div class="section-desc">
+    User membuka AsetKu lalu memilih menu. Badge notifikasi muncul jika ada jadwal maintenance overdue atau dueSoon.
+    Klik item notifikasi langsung navigate ke modul Perawatan.
+  </div>
   <div class="legend">
-    <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div> Menu / Navigasi</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> Form / Input</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div> Aksi / Simpan</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div> Modal</div>
-    <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div> Keputusan / Validasi</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div> Menu</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div> Keputusan</div>
   </div>
-
-  <div class="chart-container">
-    <div class="mermaid">
+  <div class="controls">
+    <button onclick="zoom('nav',0.15)">Zoom +</button>
+    <button onclick="zoom('nav',-0.15)">Zoom -</button>
+    <button onclick="zoomReset('nav')">Reset</button>
+  </div>
+  <div class="chart-wrap">
+    <div class="mermaid" id="chart-nav">
 flowchart TD
   Start([User Buka AsetKu]) --> MainNav{Pilih Menu Utama}
-
   MainNav -->|Beranda| Beranda[Beranda - Dalam Pengembangan]
-  MainNav -->|Data Aset| AsetList
-  MainNav -->|Pisau| PisauList
-  MainNav -->|Peminjaman| PinjamList
-  MainNav -->|Perawatan| MaintenanceList
+  MainNav -->|Data Aset| AsetList[List Data Aset dan Sparepart]
+  MainNav -->|Pisau| PisauList[Pisau - List Khusus]
+  MainNav -->|Peminjaman| PinjamList[List Peminjaman Aktif]
+  MainNav -->|Perawatan| MaintenanceList[Perawatan - Log + Jadwal]
   MainNav -->|Pengaturan| Pengaturan[Pengaturan - Dalam Pengembangan]
 
   MainNav -.-> NotifCheck{Ada Notifikasi?}
-  NotifCheck -->|Ya| NotifBadge[Badge angka merah]
+  NotifCheck -->|Ya: overdue atau dueSoon| NotifBadge[Badge angka merah]
   NotifBadge --> KlikNotif{Klik bell}
   KlikNotif --> NotifPanel[Panel Notifikasi]
   KlikNotif --> TidakNotif[Tutup panel]
   TidakNotif -.-> MainNav
-  NotifPanel --> KlikItemNotif{Klik item}
-  KlikItemNotif -->|Ke Perawatan| MaintenanceList
-  KlikItemNotif -->|Tutup| MainNav
+  NotifPanel --> KlikItemNotif{Klik item notif}
+  KlikItemNotif -->|Navigate ke Perawatan| MaintenanceList
+  KlikItemNotif -->|Tutup panel| MainNav
 
+  Beranda -.-> MainNav
+  Pengaturan -.-> MainNav
+
+  classDef menu fill:#3b82f6,stroke:#1e40af,color:#fff,font-weight:bold
+  classDef decision fill:#fbbf24,stroke:#f59e06,color:#000
+  class Start,MainNav menu
+  class NotifCheck,KlikNotif,KlikItemNotif decision
+    </div>
+  </div>
+</div>
+
+<!-- ========== 2. DATA ASET ========== -->
+<div class="section" id="sec-aset">
+  <div class="section-title">2. Data Aset dan Sparepart</div>
+  <div class="section-desc">
+    CRUD lengkap: Tambah, Edit, Detail (3 tab: Informasi, Jadwal, Riwayat Pinjam), Hapus, Pinjam/Kembali.
+    Filter kategori: Semua, Aset, Sparepart, Pisau.
+    Validasi field wajib sebelum simpan. Edit Pisau redirect ke form Pisau.
+  </div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> Form</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div> Aksi Simpan</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div> Validasi</div>
+  </div>
+  <div class="controls">
+    <button onclick="zoom('aset',0.15)">Zoom +</button>
+    <button onclick="zoom('aset',-0.15)">Zoom -</button>
+    <button onclick="zoomReset('aset')">Reset</button>
+  </div>
+  <div class="chart-wrap">
+    <div class="mermaid" id="chart-aset">
+flowchart TD
   AsetList[List Data Aset dan Sparepart]
   AsetList --> FilterKategori{Filter Kategori}
   FilterKategori -->|Semua| ShowAll[Tampilkan semua]
@@ -145,13 +192,13 @@ flowchart TD
   RefreshAset --> AsetList
 
   AsetAction -->|Edit| CheckKatEdit{kategori?}
-  CheckKatEdit -->|Pisau| PisauForm
+  CheckKatEdit -->|Pisau| PisauForm[Form Pisau]
   CheckKatEdit -->|Aset/Sparepart| AsetFormEdit[Form Edit Aset]
   AsetFormEdit --> SaveAsetEdit[Update assets]
   SaveAsetEdit --> RefreshAset
 
   AsetAction -->|Detail| CheckKatDetail{kategori?}
-  CheckKatDetail -->|Pisau| PisauDetail
+  CheckKatDetail -->|Pisau| PisauDetail[Detail Pisau]
   CheckKatDetail -->|Aset/Sparepart| AsetDetail[Detail Aset]
   AsetDetail --> DetailTab{Pilih Tab}
   DetailTab -->|Informasi| InfoAset[Data Umum + Lokasi + Depresiasi]
@@ -165,12 +212,43 @@ flowchart TD
   DelAsset --> RefreshAset
 
   AsetAction -->|Pinjam/Kembali| CheckPinjam{statusPinjam?}
-  CheckPinjam -->|Tersedia + canBorrow| BorrowModal
-  CheckPinjam -->|Dipinjam/Terlambat + canBorrow| BorrowModal
+  CheckPinjam -->|Tersedia + canBorrow| BorrowModal[BorrowModal]
+  CheckPinjam -->|Dipinjam atau Terlambat + canBorrow| BorrowModal
   CheckPinjam -->|Tidak bisa pinjam| AsetTable
 
+  classDef form fill:#f59e0b,stroke:#d97706,color:#000
+  classDef action fill:#10b981,stroke:#059669,color:#fff
+  classDef decision fill:#fbbf24,stroke:#f59e06,color:#000
+  class AsetForm,AsetFormEdit,PisauForm form
+  class SaveAset,SaveAsetEdit,UpdateJadwal action
+  class FilterKategori,CheckKatEdit,CheckKatDetail,ValAset,PilihTipeAset,DetailTab,CheckPinjam decision
+    </div>
+  </div>
+</div>
+
+<!-- ========== 3. PISAU ========== -->
+<div class="section" id="sec-pisau">
+  <div class="section-title">3. Pisau</div>
+  <div class="section-desc">
+    Modul khusus Pisau dengan field tambahan: Unit, Dimensi, Laminasi, Jumlah Mata, Produk, Bahan, Fungsi, Peran Inventori.
+    Peran Inventori menentukan: Aset (bisa pinjam), Part (bahan kalkulasi), Keduanya (keduanya).
+    Detail Pisau punya 3 tab: Info, Riwayat Pinjam, Log Perbaikan.
+  </div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> Form</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div> Simpan</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div> Validasi</div>
+  </div>
+  <div class="controls">
+    <button onclick="zoom('pisau',0.15)">Zoom +</button>
+    <button onclick="zoom('pisau',-0.15)">Zoom -</button>
+    <button onclick="zoomReset('pisau')">Reset</button>
+  </div>
+  <div class="chart-wrap">
+    <div class="mermaid" id="chart-pisau">
+flowchart TD
   PisauList[Pisau - List Khusus]
-  PisauList --> PisauFilter[Filter peran]
+  PisauList --> PisauFilter[Filter peran: Aset / Part / Semua]
   PisauFilter --> PisauTable[Tabel Pisau]
   PisauTable --> PisauAction{Pilih Aksi}
 
@@ -183,18 +261,51 @@ flowchart TD
   RefreshPisau --> PisauList
 
   PisauAction -->|Edit| PisauForm
+
   PisauAction -->|Detail| PisauDetail
   PisauDetail[Detail Pisau] --> PisauDetailTab{Tab}
-  PisauDetailTab -->|Info| InfoPisau[Data + Dimensi + Gambar]
+  PisauDetailTab -->|Info| InfoPisau[Data Umum + Dimensi + Gambar + Files]
   PisauDetailTab -->|Riwayat Pinjam| RiwayatPinjamPisau[Riwayat Peminjaman]
-  PisauDetailTab -->|Log Perbaikan| LogPerbaikan[Riwayat Maintenance]
+  PisauDetailTab -->|Log Perbaikan| LogPerbaikan[Riwayat Maintenance dari maintenanceLogs]
 
-  PisauAction -->|Log| PisauLog[Log Peminjaman Pisau]
-  PisauAction -->|Hapus| DelAsset
+  PisauAction -->|Log| PisauLog[Log Peminjaman Pisau - filter by assetId]
+  PisauAction -->|Hapus| DelAsset[Hapus asset + logs terkait]
+
   PisauAction -->|Pinjam| CheckPinjamPisau{peranInventori?}
-  CheckPinjamPisau -->|Aset/Keduanya| BorrowModal
-  CheckPinjamPisau -->|Part saja| PisauTable
+  CheckPinjamPisau -->|Aset atau Keduanya + canBorrow| BorrowModal[BorrowModal]
+  CheckPinjamPisau -->|Part saja - tidak bisa pinjam| PisauTable
 
+  classDef form fill:#f59e0b,stroke:#d97706,color:#000
+  classDef action fill:#10b981,stroke:#059669,color:#fff
+  classDef decision fill:#fbbf24,stroke:#f59e06,color:#000
+  class PisauForm form
+  class SavePisau action
+  class ValPisau,PisauDetailTab,CheckPinjamPisau decision
+    </div>
+  </div>
+</div>
+
+<!-- ========== 4. PEMINJAMAN ========== -->
+<div class="section" id="sec-pinjam">
+  <div class="section-title">4. Peminjaman dan Pengembalian</div>
+  <div class="section-desc">
+    List semua aset aktif (Dipinjam + Terlambat). Form pinjam: pilih peminjam, tanggal, deadline, sparepart opsional.
+    Form kembali: koreksi tanggal pinjam, tanggal kembali aktual, sparepart dikembalikan.
+    Setelah transaksi, update assets + borrowLogs + refresh UI.
+  </div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div> Modal</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div> Proses Simpan</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div> Validasi</div>
+  </div>
+  <div class="controls">
+    <button onclick="zoom('pinjam',0.15)">Zoom +</button>
+    <button onclick="zoom('pinjam',-0.15)">Zoom -</button>
+    <button onclick="zoomReset('pinjam')">Reset</button>
+  </div>
+  <div class="chart-wrap">
+    <div class="mermaid" id="chart-pinjam">
+flowchart TD
   PinjamList[List Peminjaman Aktif]
   PinjamList --> FilterPinjam{Filter Status}
   FilterPinjam -->|Dipinjam| ShowDipinjam[statusPinjam=Dipinjam]
@@ -204,7 +315,7 @@ flowchart TD
   ShowTerlambat --> PinjamTable
   ShowAllPinjam --> PinjamTable
   PinjamTable --> PinjamAction{Aksi}
-  PinjamAction -->|Detail| CheckKatDetail
+  PinjamAction -->|Detail| CheckKatDetail{kategori?}
   PinjamAction -->|Kembali| BorrowModal
   PinjamAction -->|Pinjam Baru| BorrowModal
 
@@ -213,19 +324,50 @@ flowchart TD
 
   TxType -->|Pinjam| InputPinjam[Isi: Peminjam, Tanggal, Deadline, Sparepart, Catatan]
   InputPinjam --> ValPinjam{Validasi?}
-  ValPinjam -->|Gagal| InputPinjam
+  ValPinjam -->|Peminjam kosong| InputPinjam
   ValPinjam -->|Lolos| ProsesPinjam[Proses Pinjam]
-  ProsesPinjam --> SetDipinjam[Update: status=Dipinjam, peminjam, tanggal]
+  ProsesPinjam --> SetDipinjam[Update assets: status=Dipinjam, peminjam, tanggal]
   SetDipinjam --> InsertLog[INSERT borrowLogs: kodeSurat, status=Dipinjam]
   InsertLog --> RefreshAll[Refresh UI]
-  RefreshAll --> MainNav
+  RefreshAll --> MainNav([Kembali ke Menu])
 
   TxType -->|Kembali| InputReturn[Isi: Tgl Pinjam koreksi, Tgl Kembali, Sparepart, Catatan]
   InputReturn --> ProsesReturn[Proses Kembali]
-  ProsesReturn --> SetTersedia[Update: status=Tersedia, kosongkan peminjam]
+  ProsesReturn --> SetTersedia[Update assets: status=Tersedia, kosongkan peminjam]
   SetTersedia --> CloseLog[UPDATE borrowLogs: status=Dikembalikan]
   CloseLog --> RefreshAll
 
+  classDef modal fill:#8b5cf6,stroke:#6d28d9,color:#fff
+  classDef action fill:#10b981,stroke:#059669,color:#fff
+  classDef decision fill:#fbbf24,stroke:#f59e06,color:#000
+  class BorrowModal modal
+  class ProsesPinjam,SetDipinjam,InsertLog,ProsesReturn,SetTersedia,CloseLog action
+  class FilterPinjam,TxType,ValPinjam,CheckKatDetail decision
+    </div>
+  </div>
+</div>
+
+<!-- ========== 5. PERAWATAN ========== -->
+<div class="section" id="sec-rawat">
+  <div class="section-title">5. Perawatan / Maintenance</div>
+  <div class="section-desc">
+    2 tab: Log Perawatan (tabel dengan filter status) dan Jadwal Perawatan (daftar jadwal semua aset).
+    Form Maintenance: pilih aset, PIC, tanggal, lokasi (Internal/Eksternal), vendor, status, foto, catatan, kendala.
+    Status perawatan: Normal -> Perlu Diperbaiki -> Dalam Perbaikan -> Selesai / Tertunda / Dibatalkan.
+  </div>
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> Form</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div> Simpan</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div> Keputusan</div>
+  </div>
+  <div class="controls">
+    <button onclick="zoom('rawat',0.15)">Zoom +</button>
+    <button onclick="zoom('rawat',-0.15)">Zoom -</button>
+    <button onclick="zoomReset('rawat')">Reset</button>
+  </div>
+  <div class="chart-wrap">
+    <div class="mermaid" id="chart-rawat">
+flowchart TD
   MaintenanceList[Perawatan - Log + Jadwal]
   MaintenanceList --> MaintTab{Tab}
   MaintTab -->|Log Perawatan| MaintLog[Tabel Maintenance Logs]
@@ -250,24 +392,45 @@ flowchart TD
   MaintTable --> MaintAction{Aksi}
   MaintAction -->|Log Baru| MaintenanceForm
   MaintAction -->|Detail| MaintenanceLogDetail
-  MaintenanceLogDetail[Detail Log Perawatan] --> LogInfo[PIC, Tanggal, Vendor, Status, Catatan]
-  MaintenanceLogDetail -->|Update| MaintenanceForm
+  MaintenanceLogDetail[Detail Log Perawatan] --> LogInfo[PIC, Tanggal, Vendor, Status, Catatan, Kendala]
+  MaintenanceLogDetail -->|Update Status| MaintenanceForm
 
-  MaintenanceForm[Form Maintenance] --> InputMaint[Isi: Aset, PIC, Tanggal, Lokasi, Vendor, Status]
+  MaintenanceForm[Form Maintenance] --> InputMaint[Isi: Aset, PIC, Tanggal Mulai, Estimasi Selesai]
   InputMaint --> CheckLokasi{Lokasi?}
   CheckLokasi -->|Internal| InternalFields[PIC + Catatan saja]
-  CheckLokasi -->|Eksternal| VendorFields[Pilih Vendor + Tanggal Kirim/Terima]
+  CheckLokasi -->|Eksternal| VendorFields[Pilih Vendor + Tanggal Kirim + Tanggal Diterima]
   InternalFields --> SaveMaint
   VendorFields --> SaveMaint
   SaveMaint[Simpan Log] --> UpdateAssetMaint[Update assets: statusPerawatan, kondisi]
   UpdateAssetMaint --> RefreshMaint[Refresh Tabel]
   RefreshMaint --> MaintenanceList
 
-  JadwalTab --> AturJadwal[Atur jadwal + interval]
-  AturJadwal --> SimpanJadwal[Simpan ke assets]
-  SimpanJadwal --> RefreshAll
+  classDef form fill:#f59e0b,stroke:#d97706,color:#000
+  classDef action fill:#10b981,stroke:#059669,color:#fff
+  classDef decision fill:#fbbf24,stroke:#f59e06,color:#000
+  class MaintenanceForm,MaintenanceLogDetail form
+  class SaveMaint,UpdateAssetMaint action
+  class MaintTab,FilterMaint,CheckJadwal,MaintAction,CheckLokasi decision
+    </div>
+  </div>
+</div>
 
-  subgraph StatusFlow[Status Transitions]
+<!-- ========== 6. STATUS & LOGIC ========== -->
+<div class="section" id="sec-status">
+  <div class="section-title">6. Status Transitions dan Logic</div>
+  <div class="section-desc">
+    Diagram state untuk status pinjam, kondisi, status perawatan.
+    Logic: canBorrow (siapa yang boleh dipinjam), peran inventori Pisau, filter kategori, gudang cascading, depresiasi.
+  </div>
+  <div class="controls">
+    <button onclick="zoom('status',0.15)">Zoom +</button>
+    <button onclick="zoom('status',-0.15)">Zoom -</button>
+    <button onclick="zoomReset('status')">Reset</button>
+  </div>
+  <div class="chart-wrap">
+    <div class="mermaid" id="chart-status">
+flowchart TB
+  subgraph StatusFlow[Status Pinjam]
     direction LR
     SA[statusPinjam: Tersedia] -->|Pinjam| SB[Dipinjam]
     SB -->|Kembali| SA
@@ -275,16 +438,16 @@ flowchart TD
     SC -->|Kembali| SA
   end
 
-  subgraph KondisiFlow[Kondisi Transitions]
+  subgraph KondisiFlow[Kondisi Aset]
     direction LR
     KA[Kondisi Baik] -->|Dalam Perbaikan| KB[Dalam Perbaikan]
-    KB -->|Selesai| KA
+    KB -->|Selesai Diperbaiki| KA
     KB -->|Rusak| KC[Rusak]
   end
 
   subgraph MaintFlow[Status Perawatan]
     direction LR
-    MA[Normal] -->|Masalah| MB[Perlu Diperbaiki]
+    MA[Normal] -->|Ada masalah| MB[Perlu Diperbaiki]
     MB -->|Mulai repair| MC[Dalam Perbaikan]
     MC -->|Selesai| MD[Selesai Diperbaikan]
     MD -->|Reset| MA
@@ -307,7 +470,7 @@ flowchart TD
     CB -->|Aset| CanYes[Bisa Pinjam]
     CB -->|Sparepart| CanYes2[Bisa Pinjam]
     CB -->|Pisau| CB2{peranInventori?}
-    CB2 -->|Aset/Keduanya| CanYes3[Bisa Pinjam]
+    CB2 -->|Aset atau Keduanya| CanYes3[Bisa Pinjam]
     CB2 -->|Part| CanNo[Tidak Bisa Pinjam]
   end
 
@@ -316,12 +479,12 @@ flowchart TD
     DD{depresiasiType?}
     DD -->|Persen| DP[depTahunan = hargaBeli x nilai%]
     DD -->|Nominal| DN[depTahunan = nilai flat]
-    DP --> DTable[Loop 1..masaManfaat]
+    DP --> DTable[Loop 1 s.d. masaManfaat]
     DN --> DTable
     DTable --> DResult[Tabel: Tahun, Dep, Akumulasi, Sisa]
   end
 
-  subgraph FilterLogic[Filter Logic]
+  subgraph FilterLogic[Filter Kategori]
     direction TB
     FL{filter?}
     FL -->|Semua| FLA[Tampilkan semua]
@@ -330,7 +493,7 @@ flowchart TD
     FL -->|Pisau| FLD[kategori=Pisau]
   end
 
-  subgraph GudangLogic[Gudang Logic]
+  subgraph GudangLogic[Gudang Cascading]
     direction TB
     GL{pemilikAsset?}
     GL -->|Internal Wajib| GH1[Gudang Kantor Pusat / IT Internal / Umum]
@@ -341,84 +504,68 @@ flowchart TD
     GH3 --> GL2
   end
 
-  Beranda -.-> MainNav
-  Pengaturan -.-> MainNav
-
-  classDef menu fill:#3b82f6,stroke:#1e40af,color:#fff,font-weight:bold
-  classDef form fill:#f59e0b,stroke:#d97706,color:#000
-  classDef action fill:#10b981,stroke:#059669,color:#fff
-  classDef modal fill:#8b5cf6,stroke:#6d28d9,color:#fff
   classDef decision fill:#fbbf24,stroke:#f59e06,color:#000
-
-  class Start,MainNav menu
-  class AsetForm,PisauForm,BorrowModal,MaintenanceForm form
-  class SaveAset,SavePisau,InsertLog,CloseLog,SetDipinjam,SetTersedia,SaveMaint action
-  class BorrowModal modal
-  class FilterKategori,TxType,CheckKatEdit,CheckKatDetail,ValAset,ValPisau,ValPinjam,CheckLokasi,CheckJadwal,CheckPinjam,CheckPinjamPisau decision
+  class PR,CB,DD,FL,GL,CheckLokasi decision
     </div>
   </div>
+</div>
 
-  <script>
-    mermaid.initialize({
-      startOnLoad: true,
-      theme: 'default',
-      flowchart: {
-        useMaxWidth: false,
-        htmlLabels: true,
-        curve: 'basis',
-        nodeSpacing: 30,
-        rankSpacing: 50,
-        padding: 20,
-      },
-      securityLevel: 'loose',
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    flowchart: {
+      useMaxWidth: false,
+      htmlLabels: true,
+      curve: 'basis',
+      nodeSpacing: 25,
+      rankSpacing: 40,
+      padding: 16,
+    },
+    securityLevel: 'loose',
+  });
+
+  // TAB SWITCHING
+  const tabs = document.querySelectorAll('.tab-btn');
+  const sections = document.querySelectorAll('.section');
+
+  tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      sections.forEach(s => s.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('sec-' + btn.dataset.tab).classList.add('active');
     });
+  });
 
-    let currentZoom = 1;
+  // ZOOM PER SECTION
+  const zoomState = {};
 
-    function zoomIn() {
-      currentZoom += 0.15;
-      applyZoom();
+  function zoom(section, delta) {
+    if (!zoomState[section]) zoomState[section] = 1;
+    zoomState[section] = Math.max(0.3, zoomState[section] + delta);
+    applyZoom(section);
+  }
+
+  function zoomReset(section) {
+    zoomState[section] = 1;
+    applyZoom(section);
+  }
+
+  function applyZoom(section) {
+    const el = document.querySelector('#chart-' + section + ' svg');
+    if (el) {
+      el.style.transform = `scale(${zoomState[section]})`;
+      el.style.transformOrigin = 'top left';
     }
+  }
 
-    function zoomOut() {
-      currentZoom = Math.max(0.3, currentZoom - 0.15);
-      applyZoom();
-    }
+  // Re-apply zoom after mermaid renders
+  const obs = new MutationObserver(() => {
+    Object.keys(zoomState).forEach(s => applyZoom(s));
+  });
+  obs.observe(document.body, { childList: true, subtree: true });
+</script>
 
-    function resetZoom() {
-      currentZoom = 1;
-      applyZoom();
-    }
-
-    function applyZoom() {
-      const svg = document.querySelector('.mermaid svg');
-      if (svg) {
-        svg.style.transform = `scale(${currentZoom})`;
-        svg.style.transformOrigin = 'top center';
-      }
-    }
-
-    function downloadSVG() {
-      const svg = document.querySelector('.mermaid svg');
-      if (!svg) return;
-      const svgData = new XMLSerializer().serializeToString(svg);
-      const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'flowchart-asetku.svg';
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    // Re-apply zoom after mermaid renders
-    const observer = new MutationObserver(() => {
-      if (document.querySelector('.mermaid svg')) {
-        applyZoom();
-        observer.disconnect();
-      }
-    });
-    observer.observe(document.querySelector('.mermaid'), { childList: true, subtree: true });
-  </script>
 </body>
 </html>
