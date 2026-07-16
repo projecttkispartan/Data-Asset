@@ -2,368 +2,277 @@
 
 ```mermaid
 flowchart TD
-  Start([🚀 User Buka AsetKu]) --> MainNav{📍 Pilih Menu Utama}
+  Start([User Buka AsetKu]) --> MainNav{Pilih Menu Utama}
 
-  %% ========================================
-  %% NAVIGASI MENU UTAMA
-  %% ========================================
-  MainNav -->|Beranda| Beranda[🏠 Beranda\nDalam Pengembangan]
-  MainNav -->|Data Aset & Sparepart| AsetList
+  %% ===== NAVIGASI =====
+  MainNav -->|Beranda| Beranda[Beranda - Dalam Pengembangan]
+  MainNav -->|Data Aset| AsetList
   MainNav -->|Pisau| PisauList
   MainNav -->|Peminjaman| PinjamList
   MainNav -->|Perawatan| MaintenanceList
-  MainNav -->|Pengaturan| Pengaturan[⚙️ Pengaturan\nDalam Pengembangan]
+  MainNav -->|Pengaturan| Pengaturan[Pengaturan - Dalam Pengembangan]
 
-  %% ========================================
-  %% NOTIFIKASI (muncul di header semua halaman)
-  %% ========================================
-  MainNav -.-> NotifCheck{🔔 Ada Notifikasi\nMaintenance?}
-  NotifCheck -->|Ya: overdue / dueSoon| NotifBadge[Tampilkan badge angka\nwarna merah]
-  NotifBadge --> KlikNotif{Klik 🔔}
-  KlikNotif --> NotifPanel[📋 Panel Notifikasi\nJatuh tempo / Terlewat]
+  %% ===== NOTIFIKASI =====
+  MainNav -.-> NotifCheck{Ada Notifikasi?}
+  NotifCheck -->|Ya| NotifBadge[Badge angka merah]
+  NotifBadge --> KlikNotif{Klik bell}
+  KlikNotif --> NotifPanel[Panel Notifikasi]
   KlikNotif --> TidakNotif[Tutup panel]
   TidakNotif -.-> MainNav
-  NotifPanel --> KlikItemNotif{Klik item notif}
-  KlikItemNotif -->|Navigate ke Perawatan| MaintenanceList
-  KlikItemNotif -->|Tutup panel| MainNav
+  NotifPanel --> KlikItemNotif{Klik item}
+  KlikItemNotif -->|Ke Perawatan| MaintenanceList
+  KlikItemNotif -->|Tutup| MainNav
 
-  %% ========================================
-  %% BREADCRUMB
-  %% ========================================
-  MainNav -.-> Breadcrumb[Breadcrumb: Beranda / Label Halaman]
-
-  %% ========================================
-  %% DATA ASET & SPAREPART
-  %% ========================================
-  AsetList[List 📦 Data Aset & Sparepart]
-
-  %% --- Filter ---
+  %% ===== DATA ASET =====
+  AsetList[List Data Aset & Sparepart]
   AsetList --> FilterKategori{Filter Kategori}
-  FilterKategori -->|Semua| ShowAll[Tampilkan semua aset]
-  FilterKategori -->|Aset| ShowAset[kategori=Aset\natau Pisau+peranAset]
-  FilterKategori -->|Sparepart / Part| ShowPart[kategori=Sparepart\natau Pisau+peranPart]
+  FilterKategori -->|Semua| ShowAll[Tampilkan semua]
+  FilterKategori -->|Aset| ShowAset[kategori=Aset atau Pisau+peranAset]
+  FilterKategori -->|Sparepart| ShowPart[kategori=Sparepart atau Pisau+peranPart]
   FilterKategori -->|Pisau| ShowPisau[kategori=Pisau]
 
-  ShowAll --> AsetTable[📋 Tabel Data]
+  ShowAll --> AsetTable[Tabel Data]
   ShowAset --> AsetTable
   ShowPart --> AsetTable
   ShowPisau --> AsetTable
 
-  %% --- Aksi di tabel ---
   AsetTable --> AsetAction{Pilih Aksi}
 
   %% --- Tambah Aset ---
-  AsetAction -->|➕ Aset Baru| AsetForm[📝 Form Aset/Sparepart]
-  AsetForm --> PilihTipeAset{Pilih Tipe Aset}
-  PilihTipeAset -->|AC / LAPTOP / RAM / SSD| AsetFields[Isi field:\nTipe, Merk, Kode, Nama,\nPemilik, Gudang, Lokasi,\nKondisi, Vendor, Harga,\nDepresiasi, Garansi, dll]
+  AsetAction -->|Tambah Baru| AsetForm[Form Aset/Sparepart]
+  AsetForm --> PilihTipeAset{Pilih Tipe}
+  PilihTipeAset --> AsetFields[Isi field wajib]
   AsetFields --> ValAset{Validasi?}
-  ValAset -->|❌ Wajib kosong| AsetForm
-  ValAset -->|✅ Lolos| SaveAset[💾 Simpan ke assets\nkategori=Aset/Sparepart]
+  ValAset -->|Gagal| AsetForm
+  ValAset -->|Lolos| SaveAset[Simpan ke assets]
   SaveAset --> RefreshAset[Refresh Tabel]
   RefreshAset --> AsetList
 
   %% --- Edit Aset ---
-  AsetAction -->|✏️ Edit| CheckKatEdit{kategori?}
+  AsetAction -->|Edit| CheckKatEdit{kategori?}
   CheckKatEdit -->|Pisau| PisauForm
-  CheckKatEdit -->|Aset / Sparepart| AsetFormEdit[📝 Form Edit Aset]
-  AsetFormEdit --> SaveAsetEdit[💾 Update assets]
+  CheckKatEdit -->|Aset/Sparepart| AsetFormEdit[Form Edit Aset]
+  AsetFormEdit --> SaveAsetEdit[Update assets]
   SaveAsetEdit --> RefreshAset
 
-  %% --- Detail ---
-  AsetAction -->|👁️ Detail| CheckKatDetail{kategori?}
-  CheckKatDetail -->|Pisau| PisauDetail
-  CheckKatDetail -->|Aset / Sparepart| AsetDetail[📄 Detail Aset]
-
   %% --- Detail Aset ---
+  AsetAction -->|Detail| CheckKatDetail{kategori?}
+  CheckKatDetail -->|Pisau| PisauDetail
+  CheckKatDetail -->|Aset/Sparepart| AsetDetail[Detail Aset]
   AsetDetail --> DetailTab{Pilih Tab}
-  DetailTab -->|📋 Informasi| InfoAset[Data Umum + Lokasi\n+ Depresiasi]
-  DetailTab -->|📅 Jadwal Perawatan| JadwalTab[Jadwal Perawatan\nAtur interval jadwal]
-  DetailTab -->|🔄 Riwayat Pinjam| RiwayatPinjam[Riwayat Peminjaman\nStatus + Tanggal]
+  DetailTab -->|Informasi| InfoAset[Data Umum + Lokasi + Depresiasi]
+  DetailTab -->|Jadwal| JadwalTab[Jadwal Perawatan]
+  DetailTab -->|Riwayat Pinjam| RiwayatPinjam[Riwayat Peminjaman]
   InfoAset --> AsetDetail
-  JadwalTab -->|Simpan Jadwal| UpdateJadwal[Update jadwalMaintenance\n+ intervalMaintenanceHari]
+  JadwalTab -->|Simpan| UpdateJadwal[Update jadwalMaintenance]
   UpdateJadwal --> AsetDetail
 
   %% --- Hapus ---
-  AsetAction -->|🗑️ Hapus| ConfirmHapus{Konfirmasi Hapus?}
-  ConfirmHapus -->|Ya| DelAsset[❌ Hapus asset +\nborrowLogs + maintenanceLogs]
+  AsetAction -->|Hapus| DelAsset[Hapus asset + logs terkait]
   DelAsset --> RefreshAset
 
-  %% --- Pinjam / Kembali dari tabel ---
-  AsetAction -->|🔄 Pinjam/Kembali| CheckPinjam{statusPinjam?}
+  %% --- Pinjam/Kembali dari tabel ---
+  AsetAction -->|Pinjam/Kembali| CheckPinjam{statusPinjam?}
   CheckPinjam -->|Tersedia + canBorrow| BorrowModal
-  CheckPinjam -->|Dipinjam / Terlambat + canBorrow| ReturnModal
-  CheckPinjam -->|Tidak bisa pinjam\n(Sparepart tanpa canBorrow)| AsetTable
+  CheckPinjam -->|Dipinjam/Terlambat + canBorrow| BorrowModal
+  CheckPinjam -->|Tidak bisa pinjam| AsetTable
 
-  %% ========================================
-  %% PISAU
-  %% ========================================
-  PisauList[🔪 Pisau — List Khusus]
-  PisauList --> PisauFilter[Filter: peranAset / peranPart / Semua]
-  PisauFilter --> PisauTable[📋 Tabel Pisau]
-
+  %% ===== PISAU =====
+  PisauList[Pisau - List Khusus]
+  PisauList --> PisauFilter[Filter peran]
+  PisauFilter --> PisauTable[Tabel Pisau]
   PisauTable --> PisauAction{Pilih Aksi}
 
-  %% --- Tambah Pisau ---
-  PisauAction -->|➕ Pisau Baru| PisauForm
-  PisauForm[📝 Form Pisau] --> PisauFields[Isi field:\nTipe, Merk, Kode, Nama,\nUnit, Dimensi, Laminasi,\nJumlah Mata, Produk, Bahan,\nFungsi, Peran Inventori,\nGambar, Files Tambahan]
+  PisauAction -->|Tambah| PisauForm
+  PisauForm[Form Pisau] --> PisauFields[Isi field khusus pisau]
   PisauFields --> ValPisau{Validasi?}
-  ValPisau -->|❌ Wajib kosong| PisauForm
-  ValPisau -->|✅ Lolos| SavePisau[💾 Simpan ke assets\nkategori=Pisau]
+  ValPisau -->|Gagal| PisauForm
+  ValPisau -->|Lolos| SavePisau[Simpan kategori=Pisau]
   SavePisau --> RefreshPisau[Refresh Tabel Pisau]
   RefreshPisau --> PisauList
 
-  %% --- Edit Pisau ---
-  PisauAction -->|✏️ Edit| PisauForm
+  PisauAction -->|Edit| PisauForm
+  PisauAction -->|Detail| PisauDetail
+  PisauDetail[Detail Pisau] --> PisauDetailTab{Tab}
+  PisauDetailTab -->|Info| InfoPisau[Data + Dimensi + Gambar]
+  PisauDetailTab -->|Riwayat Pinjam| RiwayatPinjamPisau[Riwayat Peminjaman]
+  PisauDetailTab -->|Log Perbaikan| LogPerbaikan[Riwayat Maintenance]
 
-  %% --- Detail Pisau ---
-  PisauAction -->|👁️ Detail| PisauDetail
-  PisauDetail[📄 Detail Pisau] --> PisauDetailTab{Pilih Tab}
-  PisauDetailTab -->|📋 Info| InfoPisau[Data Umum + Dimensi\n+ Gambar + Files]
-  PisauDetailTab -->|🔄 Riwayat Pinjam| RiwayatPinjamPisau[Riwayat Peminjaman]
-  PisauDetailTab -->|📝 Log Perbaikan| LogPerbaikan[Riwayat Maintenance\ndari maintenanceLogs]
+  PisauAction -->|Log| PisauLog[Log Peminjaman Pisau]
+  PisauAction -->|Hapus| DelAsset
+  PisauAction -->|Pinjam| CheckPinjamPisau{peranInventori?}
+  CheckPinjamPisau -->|Aset/Keduanya| BorrowModal
+  CheckPinjamPisau -->|Part saja| PisauTable
 
-  %% --- Log Pisau ---
-  PisauAction -->|📝 Log| PisauLog[📋 Log Peminjaman Pisau\nfilter by assetId]
-
-  %% --- Hapus Pisau ---
-  PisauAction -->|🗑️ Hapus| DelAsset
-
-  %% --- Pinjam Pisau ---
-  PisauAction -->|🔄 Pinjam| CheckPinjamPisau{peranInventori?}
-  CheckPinjamPisau -->|Aset / Keduanya + canBorrow| BorrowModal
-  CheckPinjamPisau -->|Part saja\ntidak bisa pinjam| PisauTable
-
-  %% ========================================
-  %% PEMINJAMAN
-  %% ========================================
-  PinjamList[📋 Peminjaman — Semua Aktif]
+  %% ===== PEMINJAMAN =====
+  PinjamList[List Peminjaman Aktif]
   PinjamList --> FilterPinjam{Filter Status}
-  FilterPinjam -->|Dipinjam| ShowDipinjam[Asset dengan\nstatusPinjam=Dipinjam]
-  FilterPinjam -->|Terlambat| ShowTerlambat[Asset dengan\nstatusPinjam=Terlambat]
+  FilterPinjam -->|Dipinjam| ShowDipinjam[statusPinjam=Dipinjam]
+  FilterPinjam -->|Terlambat| ShowTerlambat[statusPinjam=Terlambat]
   FilterPinjam -->|Semua Aktif| ShowAllPinjam[Dipinjam + Terlambat]
-
-  ShowDipinjam --> PinjamTable[📋 Tabel Peminjaman]
+  ShowDipinjam --> PinjamTable[Tabel Peminjaman]
   ShowTerlambat --> PinjamTable
   ShowAllPinjam --> PinjamTable
-
   PinjamTable --> PinjamAction{Aksi}
-  PinjamAction -->|👁️ Detail| CheckKatDetail
-  PinjamAction -->|🔄 Kembali| ReturnModal
-  PinjamAction -->|📌 Pinjam Baru| BorrowModal
+  PinjamAction -->|Detail| CheckKatDetail
+  PinjamAction -->|Kembali| BorrowModal
+  PinjamAction -->|Pinjam Baru| BorrowModal
 
-  %% ========================================
-  %% FORM PEMINJAMAN / PENGEMBALIAN
-  %% ========================================
-  BorrowModal[📝 BorrowModal]
-
-  %% --- Pinjam ---
+  %% ===== FORM PEMINJAMAN =====
+  BorrowModal[Form Peminjaman/Pengembalian]
   BorrowModal --> TxType{Jenis Transaksi?}
-  TxType -->|Pinjam| InputPinjam[Isi Form:\n• Pilih Peminjam*\n• Tanggal Pinjam*\n• Deadline Kembali*\n• Foto Pinjam\n• Sertakan Sparepart?\n• Catatan]
 
+  TxType -->|Pinjam| InputPinjam[Isi: Peminjam, Tanggal, Deadline, Sparepart, Catatan]
   InputPinjam --> ValPinjam{Validasi?}
-  ValPinjam -->|❌ Peminjam kosong| InputPinjam
-  ValPinjam -->|✅ Lolos| ProsesPinjam[Proses Pinjam]
-
-  ProsesPinjam --> SetDipinjam[Update assets:\nstatusPinjam=Dipinjam\nnamaPeminjam=selected\ntanggalPinjam=selected]
-  SetDipinjam --> AddSparepart{Ada sparepart\nterlampir?}
-  AddSparepart -->|Ya| PinjamSparepart[Update sparepart:\nstatusPinjam=Dipinjam\nnamaPeminjam=sama]
-  AddSparepart -->|Tidak| SkipSparepart
-  PinjamSparepart --> InsertLog
-  SkipSparepart --> InsertLog
-
-  InsertLog[INSERT borrowLogs:\nassetId, kodeSurat=SJ-PJM-xxxx,\nnamaPeminjam, tanggalPinjam,\ndeadlineKembali, status=Dipinjam,\ncatatan]
-  InsertLog --> RefreshAll[Refresh UI\nassets + borrowLogs]
+  ValPinjam -->|Gagal| InputPinjam
+  ValPinjam -->|Lolos| ProsesPinjam[Proses Pinjam]
+  ProsesPinjam --> SetDipinjam[Update: status=Dipinjam, peminjam, tanggal]
+  SetDipinjam --> InsertLog[INSERT borrowLogs: kodeSurat, status=Dipinjam]
+  InsertLog --> RefreshAll[Refresh UI]
   RefreshAll --> MainNav
 
-  %% --- Kembali ---
-  TxType -->|Kembali| InputReturn[Isi Form:\n• Tanggal Pinjam (koreksi?)*\n• Tanggal Kembali Aktual*\n• Foto Kembali\n• Daftar Sparepart dikembalikan\n• Catatan]
-
+  TxType -->|Kembali| InputReturn[Isi: Tgl Pinjam koreksi, Tgl Kembali, Sparepart, Catatan]
   InputReturn --> ProsesReturn[Proses Kembali]
-
-  ProsesReturn --> SetTersedia[Update assets:\nstatusPinjam=Tersedia\nkosongkan peminjam]
-  SetTersedia --> ReturnSparepart{Ada sparepart\ndikembalikan?}
-  ReturnSparepart -->|Ya| UpdateSparepart[Update sparepart:\nstatusPinjam=Tersedia\nkosongkan peminjam]
-  ReturnSparepart -->|Tidak| SkipReturnSparepart
-  UpdateSparepart --> CloseLog
-  SkipReturnSparepart --> CloseLog
-
-  CloseLog[UPDATE borrowLogs aktif:\nstatus=Dikembalikan\ntanggalKembali=selected]
+  ProsesReturn --> SetTersedia[Update: status=Tersedia, kosongkan peminjam]
+  SetTersedia --> CloseLog[UPDATE borrowLogs: status=Dikembalikan]
   CloseLog --> RefreshAll
 
-  %% ========================================
-  %% PERAWATAN / MAINTENANCE
-  %% ========================================
-  MaintenanceList[🔧 Perawatan — List + Jadwal]
+  %% ===== PERAWATAN =====
+  MaintenanceList[Perawatan - Log + Jadwal]
+  MaintenanceList --> MaintTab{Tab}
+  MaintTab -->|Log Perawatan| MaintLog[Tabel Maintenance Logs]
+  MaintTab -->|Jadwal| JadwalList[Daftar Jadwal semua aset]
 
-  MaintenanceList --> MaintTab{Pilih Tab}
-  MaintTab -->|📋 Log Perawatan| MaintLog[📋 Tabel Maintenance Logs]
-  MaintTab -->|📅 Jadwal Perawatan| JadwalList[📅 Daftar Jadwal\ndari semua aset]
-
-  %% --- Filter Log ---
   MaintLog --> FilterMaint{Filter Status}
   FilterMaint -->|Semua| ShowAllMaint
   FilterMaint -->|Perlu Diperbaiki| ShowNeedFix
   FilterMaint -->|Dalam Perbaikan| ShowInProgress
   FilterMaint -->|Selesai| ShowDone
-
-  ShowAllMaint --> MaintTable[📋 Tabel Log]
+  ShowAllMaint --> MaintTable[Tabel Log]
   ShowNeedFix --> MaintTable
   ShowInProgress --> MaintTable
   ShowDone --> MaintTable
 
-  %% --- Jadwal Status ---
   JadwalList --> CheckJadwal{Status Jadwal}
-  CheckJadwal -->|overdue\nterlewat| JadwalOverdue[🔴 Merah — Terlewat]
-  CheckJadwal -->|dueSoon\n≤7 hari| JadwalSoon[🟡 Kuning — Segera]
-  CheckJadwal -->|upcoming\n>7 hari| JadwalOK[🟢 Hijau — Aman]
-  CheckJadwal -->|none\ntidak ada jadwal| JadwalNone[⚪ Tidak Ada]
+  CheckJadwal -->|overdue| JadwalOverdue[Merah - Terlewat]
+  CheckJadwal -->|dueSoon| JadwalSoon[Kuning - Segera]
+  CheckJadwal -->|upcoming| JadwalOK[Hijau - Aman]
+  CheckJadwal -->|none| JadwalNone[Tidak Ada Jadwal]
 
-  %% --- Aksi Maintenance ---
-  MaintTable --> MaintAction{Pilih Aksi}
-  MaintAction -->|➕ Log Baru| MaintenanceForm
+  MaintTable --> MaintAction{Aksi}
+  MaintAction -->|Log Baru| MaintenanceForm
+  MaintAction -->|Detail| MaintenanceLogDetail
+  MaintenanceLogDetail[Detail Log Perawatan] --> LogInfo[PIC, Tanggal, Vendor, Status, Catatan]
+  MaintenanceLogDetail -->|Update| MaintenanceForm
 
-  %% --- Detail Log ---
-  MaintAction -->|👁️ Detail| MaintenanceLogDetail
-  MaintenanceLogDetail[📄 Detail Log Perawatan] --> LogInfo[Informasi:\nPIC, Tanggal, Lokasi,\nVendor, Status, Foto,\nCatatan, Kendala]
-  MaintenanceLogDetail -->|📝 Update Status| MaintenanceForm
-
-  %% --- Form Maintenance ---
-  MaintenanceForm[📝 Form Maintenance] --> PilihAssetMaint{Pilih Aset}
-  PilihAssetMaint --> InputMaint[Isi Form:\n• Aset*\n• PIC*\n• Tanggal Mulai*\n• Estimasi Selesai\n• Lokasi (Internal/Eksternal)\n• Vendor (jika eksternal)\n• Status Perawatan*\n• Foto\n• Catatan\n• Kendala]
-
+  MaintenanceForm[Form Maintenance] --> InputMaint[Isi: Aset, PIC, Tanggal, Lokasi, Vendor, Status]
   InputMaint --> CheckLokasi{Lokasi?}
-  CheckLokasi -->|Internal| InternalFields[Cukup PIC + Catatan]
-  CheckLokasi -->|Eksternal| VendorFields[Pilih Vendor +\nTanggal Kirim +\nTanggal Diterima]
-
+  CheckLokasi -->|Internal| InternalFields[PIC + Catatan saja]
+  CheckLokasi -->|Eksternal| VendorFields[Pilih Vendor + Tanggal Kirim/Terima]
   InternalFields --> SaveMaint
   VendorFields --> SaveMaint
-
-  SaveMaint[💾 Simpan Maintenance Log] --> UpdateAssetMaint[Update assets:\nstatusPerawatan = selected\nkondisi = (jika perlu)]
-  UpdateAssetMaint --> RefreshMaint[Refresh Tabel Maintenance]
+  SaveMaint[Simpan Log] --> UpdateAssetMaint[Update assets: statusPerawatan, kondisi]
+  UpdateAssetMaint --> RefreshMaint[Refresh Tabel]
   RefreshMaint --> MaintenanceList
 
-  %% --- Jadwal Perawatan dari Detail Aset ---
-  JadwalTab --> AturJadwal[Atur:\n• jadwalMaintenance (tanggal)\n• intervalMaintenanceHari]
+  JadwalTab --> AturJadwal[Atur jadwal + interval]
   AturJadwal --> SimpanJadwal[Simpan ke assets]
   SimpanJadwal --> RefreshAll
 
-  %% ========================================
-  %% STATUS TRANSITIONS
-  %% ========================================
-  subgraph StatusFlow["📊 Status Transitions"]
+  %% ===== SUBGRAPH: STATUS TRANSITIONS =====
+  subgraph StatusFlow[Status Transitions]
     direction LR
-    SA[statusPinjam:\nTersedia] -->|Pinjam| SB[Dipinjam]
+    SA[statusPinjam: Tersedia] -->|Pinjam| SB[Dipinjam]
     SB -->|Kembali| SA
     SB -->|Deadline lewat| SC[Terlambat]
     SC -->|Kembali| SA
-    SC -.->|⚠️ Overdue check| SC
   end
 
-  subgraph KondisiFlow["🔧 Kondisi Transitions"]
+  %% ===== SUBGRAPH: KONDISI =====
+  subgraph KondisiFlow[Kondisi Transitions]
     direction LR
     KA[Kondisi Baik] -->|Dalam Perbaikan| KB[Dalam Perbaikan]
-    KB -->|Selesai Diperbaiki| KA
+    KB -->|Selesai| KA
     KB -->|Rusak| KC[Rusak]
-    KA -.->|Normal| KA
   end
 
-  subgraph MaintenanceFlow["🛠️ Status Perawatan"]
+  %% ===== SUBGRAPH: STATUS PERAWATAN =====
+  subgraph MaintFlow[Status Perawatan]
     direction LR
-    MA[Normal] -->|Ada masalah| MB[Perlu Diperbaiki]
+    MA[Normal] -->|Masalah| MB[Perlu Diperbaiki]
     MB -->|Mulai repair| MC[Dalam Perbaikan]
     MC -->|Selesai| MD[Selesai Diperbaikan]
     MD -->|Reset| MA
     MC -->|Tunda| ME[Tertunda]
     ME -->|Lanjut| MC
     ME -->|Batal| MF[Dibatalkan]
-    MF -.->|Reset| MA
   end
 
-  %% ========================================
-  %% KONDISI KHUSUS PISAU
-  %% ========================================
-  subgraph PisauRoles["🎭 Peran Inventori Pisau"]
+  %% ===== SUBGRAPH: PERAN PISAU =====
+  subgraph PisauRoles[Peran Inventori Pisau]
     direction TB
     PR{peranInventori?}
-    PR -->|Aset| PA[✅ Bisa dipinjam\n✅ Bisa diperbaiki\n✅ Muncul di tab Aset]
-    PR -->|Part| PP[❌ Tidak bisa dipinjam\n✅ Bahan kalkulasi / BOM\n✅ Muncul di tab Sparepart]
-    PR -->|Keduanya| PK[✅ Bisa dipinjam\n✅ Bahan kalkulasi\n✅ Muncul di kedua tab]
+    PR -->|Aset| PA[Bisa dipinjam + diperbaiki]
+    PR -->|Part| PP[Bahan kalkulasi / BOM]
+    PR -->|Keduanya| PK[Bisa pinjam + kalkulasi]
   end
 
-  %% ========================================
-  %% CAN BORROW LOGIC
-  %% ========================================
-  subgraph BorrowLogic["🔒 canBorrow Logic"]
+  %% ===== SUBGRAPH: CAN BORROW =====
+  subgraph BorrowLogic[canBorrow Logic]
     direction TB
     CB{kategori?}
-    CB -->|Aset| CanYes[✅ Bisa Pinjam]
-    CB -->|Sparepart| CanYes2[✅ Bisa Pinjam]
+    CB -->|Aset| CanYes[Bisa Pinjam]
+    CB -->|Sparepart| CanYes2[Bisa Pinjam]
     CB -->|Pisau| CB2{peranInventori?}
-    CB2 -->|Aset / Keduanya| CanYes3[✅ Bisa Pinjam]
-    CB2 -->|Part| CanNo[❌ Tidak Bisa Pinjam]
+    CB2 -->|Aset/Keduanya| CanYes3[Bisa Pinjam]
+    CB2 -->|Part| CanNo[Tidak Bisa Pinjam]
   end
 
-  %% ========================================
-  %% DEPRESIASI
-  %% ========================================
-  subgraph Depresiasi["💰 Hitung Depresiasi"]
+  %% ===== SUBGRAPH: DEPRESIASI =====
+  subgraph Depresiasi[Hitung Depresiasi]
     direction TB
     DD{depresiasiType?}
-    DD -->|Persen| DP[depTahunan = hargaBeli × nilai% / 100]
-    DD -->|Nominal| DN[depTahunan = nilai (flat)]
-    DP --> DTable[Loop 1..masaManfaat:\nsisa = hargaBeli - akumulasi]
+    DD -->|Persen| DP[depTahunan = hargaBeli x nilai%]
+    DD -->|Nominal| DN[depTahunan = nilai flat]
+    DP --> DTable[Loop 1..masaManfaat]
     DN --> DTable
-    DTable --> DResult[Tabel:\nTahun | Depresiasi | Akumulasi | Sisa]
+    DTable --> DResult[Tabel: Tahun, Dep, Akumulasi, Sisa]
   end
 
-  %% ========================================
-  %% FILTER LOGIC
-  %% ========================================
-  subgraph FilterLogic["🔍 Filter Logic"]
+  %% ===== SUBGRAPH: FILTER =====
+  subgraph FilterLogic[Filter Logic]
     direction TB
-    FL{filter = ?}
+    FL{filter?}
     FL -->|Semua| FLA[Tampilkan semua]
-    FL -->|Aset| FLB[kategori=Aset\natau (Pisau + peranAset)]
-    FL -->|Sparepart| FLC[kategori=Sparepart\natau (Pisau + peranPart)]
+    FL -->|Aset| FLB[kategori=Aset atau Pisau+peranAset]
+    FL -->|Sparepart| FLC[kategori=Sparepart atau Pisau+peranPart]
     FL -->|Pisau| FLD[kategori=Pisau]
   end
 
-  %% ========================================
-  %% LOKASI GUDANG
-  %% ========================================
-  subgraph GudangLogic["🏢 Gudang Logic"]
+  %% ===== SUBGRAPH: GUDANG =====
+  subgraph GudangLogic[Gudang Logic]
     direction TB
     GL{pemilikAsset?}
-    GL -->|Internal Wajib| GH1[Gudang Kantor Pusat\nGudang IT Internal\nGudang Umum]
-    GL -->|TKI| GH2[Gudang Utama TKI\nGudang Logistik TKI\nGudang Transit TKI]
-    GL -->|FTP| GH3[Gudang Utama FTP\nGudang Sparepart FTP\nGudang Bahan Baku FTP]
-    GH1 --> GL2[Setelah pilih gudang:\nIsi Area, Rak, Box]
+    GL -->|Internal Wajib| GH1[Gudang Kantor Pusat / IT Internal / Umum]
+    GL -->|TKI| GH2[Gudang Utama TKI / Logistik / Transit]
+    GL -->|FTP| GH3[Gudang Utama FTP / Sparepart / Bahan Baku]
+    GH1 --> GL2[Isi Area, Rak, Box]
     GH2 --> GL2
     GH3 --> GL2
   end
 
-  %% ========================================
-  %% KEYBOARD SHORTCUTS (optional)
-  %% ========================================
   Beranda -.-> MainNav
   Pengaturan -.-> MainNav
 
-  %% ========================================
-  %% STYLING
-  %% ========================================
   classDef menu fill:#3b82f6,stroke:#1e40af,color:#fff,font-weight:bold
   classDef form fill:#f59e0b,stroke:#d97706,color:#000
   classDef action fill:#10b981,stroke:#059669,color:#fff
   classDef modal fill:#8b5cf6,stroke:#6d28d9,color:#fff
   classDef decision fill:#fbbf24,stroke:#f59e06,color:#000
-  classDef status fill:#ef4444,stroke:#dc2626,color:#fff
-  classDef info fill:#06b6d4,stroke:#0891b2,color:#fff
-  classDef subgraph fill:#f8fafc,stroke:#94a3b8
 
-  class Start,MainNav,menu menu
-  class AsetForm,PisauForm,BorrowModal,ReturnModal,MaintenanceForm form
+  class Start,MainNav menu
+  class AsetForm,PisauForm,BorrowModal,MaintenanceForm form
   class SaveAset,SavePisau,InsertLog,CloseLog,SetDipinjam,SetTersedia,SaveMaint action
-  class BorrowModal,DownloadModal modal
+  class BorrowModal modal
   class FilterKategori,TxType,CheckKatEdit,CheckKatDetail,ValAset,ValPisau,ValPinjam,CheckLokasi,CheckJadwal,CheckPinjam,CheckPinjamPisau decision
-  class StatusFlow,KondisiFlow,MaintenanceFlow,PisauRoles,BorrowLogic,Depresiasi,FilterLogic,GudangLogic subgraph
 ```
