@@ -1,182 +1,201 @@
 # Product Requirements Document (PRD)
 
-## Improvement: Pisau sebagai Asset & Perawatan
+## Improvement: Pisau sebagai Asset, Fitur Perawatan, & Detail View Baru
 
-**Versi:** 1.1
-**Tanggal:** 16 Juli 2026
-**Status:** Draft — Domain Rules Reviewed
+**Versi:** 2.0
+**Tanggal:** 20 Juli 2026
+**Status:** Active
 
 ---
 
 ## 1. Ringkasan
 
-Dokumen ini mendefinisikan kebutuhan improvement untuk dua modul utama:
+Dokumen ini mendefinisikan 3 area improvement utama:
 
-1. **Pisau sebagai Asset** — Penggunaan pisau diperlakukan sebagai aset yang bisa dipinjamkan, dikembalikan, dan dilacak statusnya
-2. **Perawatan** — Sistem pencatatan, penjadwalan, dan pelacakan perawatan/pemeliharaan inventaris
+1. **Pisau sebagai Asset** — Form input pisau dengan 2 tipe (Part & Aset), urutan form pisau dulu baru kebutuhan aset
+2. **Fitur Perawatan** — Pencatatan sparepart yang digunakan saat perbaikan (dari inventory atau input manual)
+3. **Tampilan Detail Baru Asset** — Detail view konsisten dengan 3 tab (Informasi, Jadwal & Perawatan, Riwayat Pinjam)
 
 ---
 
 ## 2. Latar Belakang
 
 ### 2.1 Pisau sebagai Asset
-Sebelumnya, pisau dikelola secara terpisah dari modul aset utama. Pisau memiliki peran ganda sebagai **Aset** (bisa dipinjamkan) dan **Part** (bisa dikalkulasi sebagai sparepart). Improvement ini memastikan pisau terintegrasi penuh dengan sistem aset, termasuk alur peminjaman, pengembalian, dan pelacakan.
+Pisau dikelola dalam modul terpisah dengan kemampuan ganda: sebagai **Aset** (bisa dipinjamkan) dan **Part** (bisa dikalkulasi sebagai sparepart). Form input pisau perlu disederhanakan dan diurutkan berdasarkan prioritas pengguna.
 
-### 2.2 Perawatan
-Sistem perawatan sebelumnya hanya berupa form pencatatan sederhana. Improvement ini menghadirkan:
-- Detail view dengan 3 tab (Informasi, Jadwal & Perawatan, Riwayat Pinjam)
-- Timeline visual riwayat jadwal perawatan
-- Integrasi penuh dengan modul aset dan pisau
+### 2.2 Fitur Perawatan
+Sistem perawatan memerlukan pelacakan sparepart yang digunakan saat perbaikan. Sebelumnya, sparepart hanya bisa dicatat dalam catatan bebas (free text). Improvement ini menghadirkan pencatatan sparepart terstruktur.
+
+### 2.3 Tampilan Detail Baru Asset
+Semua detail view (Aset, Pisau, Perawatan) perlu menggunakan struktur yang identik dan konsisten.
 
 ---
 
 ## 3. Pisau sebagai Asset
 
-### 3.1 Peran Inventori
-Pisau memiliki dua peran yang bisa dikombinasikan:
+### 3.1 Peran Inventori — 2 Tipe Saja
 
-| Peran | Keterangan | Kemampuan |
-|-------|-----------|-----------|
-| **Aset** | Pisau yang dimiliki dan bisa dipinjamkan | Peminjaman, Pengembalian, Depresiasi, Pelacakan lokasi |
+| Tipe | Keterangan | Kemampuan |
+|------|-----------|-----------|
+| **Aset** | Pisau yang dimiliki dan bisa dipinjamkan | Peminjaman, Pengembalian, Depresiasi, Pelacakan lokasi, Jadwal perawatan |
 | **Part** | Pisau yang digunakan sebagai sparepart | Kalkulasi harga, Stok |
-| **Keduanya** | Pisau berperan sebagai Aset dan Part sekaligus | Semua kemampuan di atas |
 
-### 3.2 Fitur Peminjaman Pisau
+> **Catatan:** Opsi "Keduanya" dihapus dari form. Pisau hanya bisa berperan sebagai Aset ATAU Part.
 
-#### Alur Peminjaman
-1. Pisau dalam status **Tersedia** → bisa dipinjam
-2. Klik tombol **Pinjam** → form peminjaman muncul
-3. Isi data: Peminjam, Tanggal Pinjam, Deadline Kembali, Sparepart/Aksesoris (opsional)
-4. Simpan → Status berubah menjadi **Dipinjam**
+### 3.2 Urutan Form Input Pisau
 
-#### Alur Pengembalian
-1. Pisau dalam status **Dipinjam** atau **Terlambat** → bisa dikembalikan
-2. Klik tombol **Kembalikan** → form pengembalian muncul
-3. Isi data: Tanggal Kembali (Aktual), Foto Kembali, Catatan
-4. Simpan → Status berubah menjadi **Tersedia**
+Form input pisau diurutkan berdasarkan prioritas:
+
+#### Step 1: Informasi Pisau (dahulukan)
+1. **Spesifikasi Pisau**
+   - Nama Pisau *
+   - Kode Pisau *
+   - Unit * (Pcs / Set)
+   - Merek (dropdown dari master tipe)
+   - Produk (Solid Wood, MDF, Plywood, Acrylic, Lainnya)
+   - Bahan Baku (HSS, Carbide, Diamond, Steel, Lainnya)
+   - Dimensi: Panjang *, Lebar *, Tinggi * (mm)
+   - Laminasi * (Ya / Tidak)
+   - Jumlah Mata *
+   - Fungsi * (multi-select: Membuat Profil, Membuat Alur, Memotong Kayu, Finishing Potong, Router, Radial, PROFIL, Lain-lain)
+
+2. **Dokumentasi**
+   - Foto Utama Pisau
+   - Hasil Penggunaan
+   - Gambar Teknis: Perspektif, Penampang, Profil Pisau
+
+3. **File Tambahan**
+   - Perencanaan, JPG, Pisau 3D, AUTOCAD, Lainnya
+
+#### Step 2: Kebutuhan Aset & Part (kedua)
+1. **Tipe** * — Pilih antara Aset atau Part (radio button)
+
+2. **Jika Tipe = Aset:**
+   - Identitas: Nomor Seri *, No. Registrasi *, Kondisi *, Catatan, Vendor, Harga Beli
+   - Lokasi Gudang: Pemilik, Gudang, Area, Rak/Box
+   - Pembelian & Depresiasi: Tgl Pembelian, Tgl Masa Garansi, Masa Manfaat, Kalkulator Depresiasi, Tipe Nilai Depresiasi, Nilai Depresiasi
+
+3. **Jika Tipe = Part:**
+   - Identitas: Nomor Seri *, No. Registrasi *, Kondisi *, Catatan, Vendor, Harga Beli, Stok Tersedia
+   - Lokasi Gudang: Pemilik, Gudang, Area, Rak/Box
+   - Keuangan disembunyikan (data lama tetap disimpan jika ada)
+
+### 3.3 Peminjaman Pisau
+
+Hanya pisau dengan tipe **Aset** yang bisa dipinjamkan.
 
 #### Status Pinjam
-| Status | Keterangan | Aksi Tersedia |
-|--------|-----------|---------------|
-| `Tersedia` | Pisau bisa dipinjam | Pinjam |
-| `Dipinjam` | Pisau sedang dipinjam | Kembalikan |
-| `Terlambat` | Deadline sudah lewat | Kembalikan |
+| Status | Keterangan | Aksi |
+|--------|-----------|------|
+| `Tersedia` | Bisa dipinjam | Pinjam |
+| `Dipinjam` | Sedang dipinjam | Kembalikan |
+| `Terlambat` | Deadline lewat | Kembalikan |
 
-### 3.3 Detail View Pisau
+#### Validasi Peminjaman
+- Pisau harus berstatus `Tersedia`
+- Pisau tidak boleh sedang/perlu/tertunda perawatan
+- Pisau tidak boleh dalam kondisi `Rusak` atau `Dalam Perbaikan`
 
-Tab **Informasi** menampilkan:
-- Foto utama + Foto hasil penggunaan
-- Nama, Kode, Kondisi (badge), Status Pinjam (badge)
-- Peran Inventori, Status Pinjam
-- No. Seri, No. Registrasi
-- Vendor, Harga Beli, Tanggal Pembelian, Masa Garansi
-- Penempatan Lokasi (Gudang, Area, Rak, Box)
-- Ukuran (Panjang x Lebar x Tinggi mm)
-- Laminasi, Mata Pisau, Unit, Merek, Produk, Bahan Baku
-- Fungsi
-- Depresiasi (jika peran Aset)
-- Catatan
+### 3.4 Sample Data Pisau
 
-Tab **Jadwal & Perawatan** menampilkan:
-- Pengaturan jadwal perawatan berikutnya
-- Timeline riwayat jadwal (kapan dijadwalkan vs kapan dilakukan)
-- Riwayat perbaikan detail
-
-Tab **Riwayat Pinjam** menampilkan:
-- Tabel sirkulasi & peminjaman: No. Surat Jalan, Nama Peminjam, Tgl Dipinjam, Deadline, Tgl Kembali, Status
-
-### 3.4 Kalkulasi Harga Pisau
-
-Untuk pisau dengan peran **Part**:
-- Harga satuan × Quantity = Total per item
-- Total semua item = Grand Total
-- Berguna untuk kalkulasi biaya penggunaan pisau per mesin/produksi
+| ID | Kode | Nama | Merek | Tipe | Status | Produk |
+|----|------|------|-------|------|--------|--------|
+| 101 | KNF-G001 | Pisau Gergaji | FREUD | Aset | Normal | Solid Wood |
+| 102 | KNF-CSL-200 | Knife Circular 200 | LEITZ | Aset | Normal (Dipinjam) | MDF |
+| 103 | KNF-LMN-150 | Pisau Multifungsi | BOSCH | Part | Normal | Plywood |
+| 104 | M241 | Knife Vika | MAKITA | Aset | Perlu Diperbaiki | Acrylic |
+| 105 | KNF-PK-TL | Pisau Potong Kayu TL | FESTOOL | Aset | Dalam Perbaikan | Solid Wood |
+| 106 | KNF-PRF-90 | Pisau Profil 90 | LEITZ | Aset | Normal | MDF |
+| 107 | KNF-RTR-60 | Router Bit 60° | FREUD | Aset | Normal | Acrylic |
+| 108 | KNF-SAW-300 | Circular Saw 300mm | LEITZ | Aset | Normal (Dipinjam) | Plywood |
+| 109 | KNF-BT-50 | Boring Tool 50mm | BOSCH | Part | Normal | MDF |
+| 110 | KNF-GRP-120 | Pisau Greedy 120 | FESTOOL | Aset | Perlu Diperbaiki | Lainnya |
 
 ---
 
-## 4. Perawatan
+## 4. Fitur Perawatan
 
-### 4.1 Ringkasan Modul
+### 4.1 Ringkasan
 
 Modul perawatan adalah satu pintu untuk:
-- Melihat daftar semua inventaris (Aset / Sparepart / Pisau) beserta status perawatannya
-- Mencatat perbaikan baru
+- Melihat daftar semua inventaris beserta status perawatannya
+- Mencatat perbaikan baru dengan **sparepart yang digunakan**
 - Mengupdate status perbaikan yang sedang berjalan
 - Melihat jadwal perawatan yang sudah lewat atau segera jatuh tempo
 - Melihat riwayat perawatan lengkap per item
 
-### 4.2 Daftar Perawatan (List View)
+### 4.2 Form Perbaikan — Sparepart yang Digunakan
 
-#### Statistik Cards
-| Card | Keterangan |
-|------|-----------|
-| Perlu Diperbaiki | Jumlah item dengan status perawatan "Perlu Diperbaiki" |
-| Dalam Perbaikan | Jumlah item dengan status "Dalam Perbaikan" |
-| Selesai Diperbaiki | Jumlah item dengan status "Selesai Diperbaiki" |
-| Jadwal Due / Terlewat | Jumlah item yang jadwal perawatannya sudah lewat atau dalam 7 hari |
+#### Fitur Baru: Pencatatan Sparepart Terstruktur
 
-#### Filter & Pencarian
-- **Pencarian:** Berdasarkan kode atau nama item
-- **Filter Status:** Semua, Normal, Perlu Diperbaiki, Dalam Perbaikan, Tertunda, Selesai Diperbaiki, Dibatalkan
+Form perbaikan sekarang memiliki section **"Sparepart yang Digunakan"** dengan 2 cara input:
 
-#### Tabel Inventori
-| Kolom | Keterangan |
-|-------|-----------|
-| Kode | Kode unik item (mono font, biru) |
-| Nama | Nama item |
-| Kategori | Badge warna: Aset (biru), Sparepart (ungu), Pisau (kuning) |
-| PIC | Penanggung jawab terakhir |
-| Status | Badge status perawatan + indikator kendala |
-| Lokasi / Estimasi | Lokasi service (Internal/Eksternal) + tanggal estimasi selesai |
-| Aksi | Tombol Lihat Detail, Update Perbaikan |
+##### Cara 1: Pilih dari Inventory
+- Dropdown menampilkan semua sparepart dan pisau berperan Part
+- Pilih item → otomatis ambil kode, nama, satuan, dan stok
+- Input quantity (dibatasi stok tersedia)
+- Item yang sudah dipilih tidak muncul lagi di dropdown
 
-### 4.3 Detail View Perawatan (MaintenanceDetailModal)
+##### Cara 2: Input Manual
+- Nama sparepart (text)
+- Quantity (number)
+- Satuan (dropdown: Pcs, Set, Botol, Tube, Liter)
+- Tombol "Tambah"
 
-Ketika user mengklik tombol **Lihat Detail** (ikon mata) pada tabel, muncul modal dengan 3 tab:
+##### Tampilan List Sparepart
+Setiap item sparepart ditampilkan dengan:
+- Badge tipe: `INV` (biru) untuk dari inventory, `TXT` (ungu) untuk manual
+- Nama sparepart
+- Kode (jika dari inventory)
+- Catatan (jika input manual)
+- Quantity & Satuan
+- Tombol hapus
 
-#### Tab 1: Informasi
-Menampilkan data lengkap item (sama dengan detail view aset/pisau):
-- Foto, Nama, Kode, Kondisi, Status Perawatan
-- Peran Inventori, Status Pinjam
-- Data inventori lengkap (vendor, harga, garansi, lokasi, dll)
-- PIC terakhir dari log perawatan
+#### Data Model Sparepart di Maintenance Log
+```javascript
+spareparts: [
+  {
+    type: 'asset' | 'manual',
+    assetId: Number,       // hanya jika type = 'asset'
+    kode: String,          // hanya jika type = 'asset'
+    nama: String,
+    qty: Number,
+    maxQty: Number,        // hanya jika type = 'asset' (stok)
+    satuan: String,        // 'Pcs' | 'Set' | 'Botol' | 'Tube' | 'Liter'
+    catatan: String,       // hanya jika type = 'manual'
+  }
+]
+```
 
-#### Tab 2: Jadwal & Perawatan
-Tiga bagian:
+#### Tampilan di Detail Log
+Sparepart ditampilkan di detail log perawatan dengan:
+- Header: "Sparepart yang Digunakan" dengan ikon Package
+- List item dengan badge tipe, nama, kode, quantity × satuan
 
-**a. Pengaturan Jadwal**
-- Tanggal Perawatan Berikutnya (date picker)
-- Interval Periodic (hari, default 90)
-- Badge status: Terlewat / Segera / Terjadwal / Belum dijadwalkan
-- Peringatan visual jika terlambat atau segera jatuh tempo
-- Tombol **Simpan Jadwal**
+### 4.3 Status Perawatan
 
-**b. Riwayat Jadwal (Timeline)**
-- Highlight jadwal berikutnya (orange, animated pulse)
-- Timeline visual untuk setiap perawatan:
-  - Titik berwarna: hijau (selesai), oranye (dalam perbaikan), abu-abu (lainnya)
-  - Tanggal dijadwalkan mulai, estimasi selesai, aktual selesai
-  - Indikator terlambat jika aktual > estimasi
-  - PIC, lokasi, kendala
+| Status | Keterangan | Transisi |
+|--------|-----------|----------|
+| Normal | Item dalam kondisi baik | → Perlu Diperbaiki |
+| Perlu Diperbaiki | Item perlu diperbaiki | → Dalam Perbaikan, Tertunda, Dibatalkan |
+| Dalam Perbaikan | Sedang dalam proses perbaikan | → Tertunda, Selesai Diperbaiki |
+| Tertunda | Perbaikan ditunda | → Dalam Perbaikan, Dibatalkan |
+| Selesai Diperbaiki | Perbaikan selesai | → Perlu Diperbaiki |
+| Dibatalkan | Perbaikan dibatalkan | → Perlu Diperbaiki |
 
-**c. Riwayat Perbaikan**
-- Daftar log perawatan dalam format kartu expandable
-- Setiap log menampilkan: status, PIC, lokasi, tanggal, foto, kendala, catatan, dokumen
+### 4.4 Auto Status Asset
 
-#### Tab 3: Riwayat Pinjam
-- Tabel sirkulasi & peminjaman (khusus item yang bisa dipinjam)
-- Kolom: No. Surat Jalan, Nama Peminjam, Tgl Dipinjam, Deadline, Tgl Kembali, Status
+Ketika status perawatan berubah menjadi **"Dalam Perbaikan"**:
+- `kondisi` asset otomatis berubah menjadi `"Dalam Perbaikan"`
+- Validasi: item harus dikembalikan terlebih dahulu jika sedang dipinjam
 
-### 4.4 Form Perbaikan (MaintenanceFormModal)
+### 4.5 Field Form Perbaikan
 
-Ketika user mengklik tombol **Catat Perbaikan** atau **Update Perbaikan**:
-
-#### Field Form
 | Field | Tipe | Wajib | Keterangan |
 |-------|------|-------|-----------|
 | Item Inventori | Select | Ya | Pilih aset/sparepart/pisau |
 | PIC | Text | Ya | Penanggung jawab perbaikan |
-| Status Perawatan | Select | Ya | Perlu Diperbaiki, Dalam Perbaikan, Selesai Diperbaiki, Dibatalkan |
+| Status Perawatan | Select | Ya | Transisi valid |
 | Lokasi / Tempat Service | Radio | Ya | Internal / Eksternal |
 | Vendor (jika Eksternal) | Select | Ya | Pilih vendor dari master data |
 | Tanggal Pengiriman | Date | - | Untuk service eksternal |
@@ -184,144 +203,162 @@ Ketika user mengklik tombol **Catat Perbaikan** atau **Update Perbaikan**:
 | Tanggal Mulai | Date | Ya | Kapan perbaikan dimulai |
 | Estimasi Selesai | Date | Ya | Perkiraan selesai |
 | Tanggal Aktual Selesai | Date | Ya* | *Hanya jika status = Selesai |
-| Lama Waktu Perbaikan | Text | Ya* | *Dihitung otomatis, bisa diedit |
+| Lama Waktu Perbaikan | Text | Ya* | Dihitung otomatis, bisa diedit |
 | Jadwal Maintenance Berikutnya | Date | - | Diisi saat status = Selesai |
 | Interval (hari) | Number | - | Default 90 hari |
 | Catatan | Textarea | - | Detail pekerjaan, hasil inspeksi |
 | Kendala | Textarea | - | Hambatan yang dihadapi |
+| **Sparepart yang Digunakan** | Section | - | Pilih dari inventory atau input manual |
 | Foto Perbaikan | File | - | Dokumentasi kondisi/proses |
 | Dokumen Pendukung | File (multi) | - | Surat jalan, invoice, BA |
 
-### 4.5 Status Perawatan
+---
 
-| Status | Keterangan | Transisi |
-|--------|-----------|----------|
-| Normal | Item dalam kondisi baik | → Perlu Diperbaiki |
-| Perlu Diperbaiki | Item perlu diperbaiki | → Dalam Perbaikan, Dibatalkan |
-| Dalam Perbaikan | Sedang dalam proses perbaikan | → Selesai Diperbaiki |
-| Selesai Diperbaiki | Perbaikan selesai | → Normal (otomatis) |
-| Dibatalkan | Perbaikan dibatalkan | → Normal |
+## 5. Tampilan Detail Baru Asset
 
-### 4.6 Penjadwalan Otomatis
+### 5.1 Struktur Tab Konsisten
 
-Ketika perbaikan ditandai **Selesai Diperbaiki**:
-1. Sistem menghitung jadwal berikutnya berdasarkan `tanggalSelesaiAktual + intervalMaintenanceHari`
-2. User bisa mengubah jadwal yang diusulkan
-3. Jika jadwal sudah lewat → notifikasi "Terlewat" (merah)
-4. Jika jadwal dalam 7 hari → notifikasi "Segera" (kuning)
+Semua detail view (Aset, Pisau, Perawatan) menggunakan struktur tab yang identik:
+
+| Tab | Icon | Keterangan |
+|-----|------|-----------|
+| **Informasi** | - | Data lengkap item |
+| **Jadwal & Perawatan** | - | Timeline + log perawatan |
+| **Riwayat Pinjam** | - | Tabel sirkulasi peminjaman |
+
+### 5.2 Tab Informasi
+
+#### Header
+- Foto utama + Foto hasil penggunaan
+- Nama item (bold, besar)
+- Kode item (mono font, biru)
+- Badge: Kondisi + Status Pinjam
+
+#### Grid Informasi (2 kolom di desktop)
+- Nama, Kondisi
+- Peran Inventori
+- Status Pinjam
+- No. Seri, No. Registrasi
+- Vendor, Harga Beli
+- Tanggal Pembelian, Masa Garansi
+- Penempatan Lokasi (Gudang, Area, Rak, Box)
+- Ukuran (Panjang × Lebar × Tinggi mm)
+- Laminasi, Mata Pisau, Unit
+- Merek, Produk, Bahan Baku
+- Fungsi
+- Depresiasi (jika peran Aset)
+- Catatan
+
+### 5.3 Tab Jadwal & Perawatan
+
+#### a. Pengaturan Jadwal
+- Tanggal Perawatan Berikutnya (date picker)
+- Interval Periodic (hari, default 90)
+- Badge status: Terlewat / Segera / Terjadwal / Belum dijadwalkan
+- Tombol **Simpan Jadwal**
+
+#### b. Riwayat Jadwal (Timeline)
+- Timeline visual untuk setiap perawatan
+- Titik berwarna: hijau (selesai), oranye (dalam perbaikan), abu-abu (lainnya)
+- Indikator terlambat jika aktual > estimasi
+- PIC, lokasi, kendala
+
+#### c. Riwayat Perbaikan
+- Daftar log perawatan dalam format kartu expandable
+- Setiap log menampilkan: status, PIC, lokasi, tanggal, foto, kendala, catatan, dokumen
+- **Sparepart yang digunakan** (jika ada)
+
+### 5.4 Tab Riwayat Pinjam
+
+Tabel sirkulasi & peminjaman:
+- No. Surat Jalan
+- Nama Peminjam
+- Tgl Dipinjam
+- Deadline Kembali
+- Tgl Kembali
+- Status
 
 ---
 
-## 5. Integrasi Antar Modul
+## 6. Integrasi Antar Modul
 
 ```
 ┌─────────────┐     ┌──────────────┐     ┌──────────────┐
 │    Pisau     │────▶│   Perawatan  │◀────│    Aset      │
 │             │     │              │     │              │
 │ • Peminjaman│     │ • Jadwal     │     │ • Depresiasi │
-│ • Pengembalian│   │ • Perbaikan  │     │ • Pelacakan  │
+│ • Sparepart │     │ • Sparepart  │     │ • Pelacakan  │
 │ • Kalkulasi │     │ • Riwayat    │     │ • Peminjaman │
 └─────────────┘     └──────────────┘     └──────────────┘
 ```
 
-- **Pisau ↔ Perawatan:** Pisau bisa dicatat perawatannya di modul Perawatan. Jadwal perawatan pisau diatur dari detail view pisau (tab Jadwal & Perawatan).
-- **Aset ↔ Perawatan:** Sama seperti Pisau. Semua aset bisa dicatat perawatannya.
-- **Pisau ↔ Aset:** Pisau dengan peran Aset terhubung ke modul peminjaman aset. Status pinjam pisau terlihat di detail view perawatan.
-
----
-
-## 6. UI/UX Specifications
-
-### 6.1 Konsistensi Detail View
-Semua detail view (Aset, Pisau, Perawatan) menggunakan struktur yang identik:
-- Header: Nama item uppercase + tombol close
-- Tab: Informasi, Jadwal & Perawatan, Riwayat Pinjam
-- Warna aktif tab: Biru (`border-blue-600 text-blue-600`)
-- Footer: Tombol "Kembali" saja (sticky bottom)
-- Container: `bg-slate-50 rounded-2xl max-w-5xl`
-
-### 6.2 Warna & Badge
-| Elemen | Warna |
-|--------|-------|
-| Badge Kondisi Baik | Hijau |
-| Badge Perlu Perbaikan | Kuning/Amber |
-| Badge Dalam Perbaikan | Oranye |
-| Badge Selesai | Biru langit |
-| Badge Terlambat (jadwal) | Merah |
-| Badge Segera (jadwal) | Kuning |
-| Tombol Utama | Oranye (`bg-orange-600`) |
-| Tombol Edit | Biru (`bg-blue-50 text-blue-700`) |
-
-### 6.3 Responsive
-- Modal: `max-w-5xl`, scrollable `max-h-[90vh]`
-- Grid info: 2 kolom di desktop, 1 kolom di mobile
-- Tabel: horizontal scroll di mobile
+- **Pisau ↔ Perawatan:** Pisau bisa dicatat perawatannya. Sparepart pisau bisa digunakan saat perbaikan.
+- **Aset ↔ Perawatan:** Semua aset bisa dicatat perawatannya dengan sparepart terstruktur.
+- **Pisau ↔ Aset:** Pisau dengan tipe Aset terhubung ke modul peminjaman.
 
 ---
 
 ## 7. Data Model
 
-### 7.0 Aturan Domain Wajib
-
-- `kondisi`, `statusPerawatan`, dan `statusPinjam` adalah tiga state berbeda dan tidak boleh saling menggantikan.
-- Item hanya dapat mulai dipinjam bila berperan Aset, berstatus `Tersedia`, tidak rusak, dan tidak sedang/perlu/tertunda perawatan.
-- Sparepart biasa bukan item peminjaman utama. Sparepart diperlakukan sebagai stok/aksesoris dan dicatat pada transaksi terkait.
-- `Terlambat` dihitung otomatis ketika transaksi belum kembali dan `deadlineKembali < tanggal hari ini`.
-- Pisau `Keduanya` selalu mempertahankan kemampuan Aset dan Part saat dibuat maupun diedit.
-- Status item kembali `Normal` setelah log `Selesai Diperbaiki` atau `Dibatalkan`; status akhir tetap tersimpan pada log perawatan.
-- Semua mutasi menyimpan `createdAt`, `createdBy`, `updatedAt`, dan `updatedBy`.
-- Semua tanggal operasional memakai tanggal lokal `YYYY-MM-DD`; timestamp audit memakai ISO 8601 UTC.
-
 ### 7.1 Asset
 ```javascript
 {
   id: Number,
-  kode: String,          // e.g. "M-001", "P-001"
+  kategori: String,          // "Aset" | "Sparepart" | "Pisau"
+  kode: String,
   nama: String,
-  kategori: String,      // "Aset" | "Sparepart" | "Pisau"
-  kondisi: String,       // "Baik" | "Perlu Perbaikan" | "Rusak"
-  statusPerawatan: String, // "Normal" | "Perlu Diperbaiki" | "Dalam Perbaikan" | "Selesai Diperbaiki"
-  statusPinjam: String,  // "Tersedia" | "Dipinjam" | "Terlambat"
-  peranInventori: String, // "Aset" | "Part" | "Keduanya" (khusus Pisau)
-  
-  // Lokasi
+  assetTypeId: String,
+  tipe: String,
+  merk: String,
+  noSeri: String,
+  noRegistrasi: String,
+  pemilikAsset: String,
   gudang: String,
   area: String,
   rak: String,
   box: String,
-  
-  // Jadwal Perawatan
-  jadwalMaintenance: String,     // ISO date string
-  intervalMaintenanceHari: Number, // default 90
-  
-  // Detail
-  vendor: String,
-  hargaBeli: Number,
-  tanggalBeli: String,
+  kondisi: String,           // "Kondisi Baik" | "Dalam Perbaikan" | "Rusak" | "Tidak Berfungsi" | "Hilang" | "Terjual"
+  statusPinjam: String,      // "Tersedia" | "Dipinjam" | "Terlambat"
+  namaPeminjam: String,
+  tanggalPinjam: String,
   tanggalGaransi: String,
-  noSeri: String,
-  noRegistrasi: String,
+  gambar: String,
+  hargaBeli: Number,
+  depresiasiType: String,    // "Persen" | "Nominal"
+  depresiasiValue: Number,
+  masaManfaat: Number,
+  tanggalBeli: String,
+  vendor: String,
   catatan: String,
-  
+  statusPerawatan: String,   // "Normal" | "Perlu Diperbaiki" | "Dalam Perbaikan" | "Tertunda" | "Selesai Diperbaiki" | "Dibatalkan"
+  biayaPerbaikan: Number,
+  jadwalMaintenance: String,
+  intervalMaintenanceHari: Number,
+
   // Pisau-specific
-  merk: String,
-  produk: String,
-  bahanBaku: String,
-  fungsi: String[],
+  unit: String,
   panjang: Number,
   lebar: Number,
   tinggi: Number,
   laminasi: String,
   jumlahMata: Number,
-  unit: String,
-  depresiasiType: String,  // "Persen" | "Flat"
-  depresiasiValue: Number,
-  masaManfaat: Number,
-  stok: Number,           // untuk Sparepart/Pisau berperan Part; minimum 0
-  createdBy: String,
-  updatedBy: String,
+  produk: String,
+  bahanBaku: String,
+  fungsi: String[],
+  semuaFungsi: Boolean,
+  peranInventori: String,    // "Aset" | "Part" (Keduanya dihapus dari form)
+  stok: Number,
+  fotoUtama: String,
+  gambarHasil: String,
+  gambarPerspektif: String,
+  gambarPenampang: String,
+  gambarProfil: String,
+  filesTambahan: Object,
+
   createdAt: String,
+  createdBy: String,
   updatedAt: String,
+  updatedBy: String,
 }
 ```
 
@@ -336,21 +373,22 @@ Semua detail view (Aset, Pisau, Perawatan) menggunakan struktur yang identik:
   pic: String,
   tanggalMulai: String,
   estimasiSelesai: String,
-  tanggalSelesaiAktual: String | null,
-  lokasiTipe: String,      // "Internal" | "Eksternal"
-  vendorId: String | null,
-  vendorNama: String | null,
-  vendorKontak: String | null,
-  vendorAlamat: String | null,
-  tanggalKirim: String | null,
-  tanggalDiterima: String | null,
+  tanggalSelesaiAktual: String,
+  lokasiTipe: String,
+  vendorId: String,
+  vendorNama: String,
+  vendorKontak: String,
+  vendorAlamat: String,
+  tanggalKirim: String,
+  tanggalDiterima: String,
   status: String,
-  foto: String | null,
+  foto: String,
   dokumenPendukung: Array,
-  lamaWaktuPerbaikan: String | null,
+  lamaWaktuPerbaikan: String,
   catatan: String,
   kendala: String,
-  createdAt: String,        // ISO timestamp
+  spareparts: Array,          // [{type, assetId, kode, nama, qty, maxQty, satuan, catatan}]
+  createdAt: String,
   createdBy: String,
   updatedAt: String,
   updatedBy: String,
@@ -365,11 +403,10 @@ Semua detail view (Aset, Pisau, Perawatan) menggunakan struktur yang identik:
   kodeSurat: String,
   namaPeminjam: String,
   tanggalPinjam: String,
-  deadlineKembali: String | null,
-  tanggalKembali: String | null,
-  status: String,           // "Dipinjam" | "Dikembalikan" | "Terlambat"
+  deadlineKembali: String,
+  tanggalKembali: String,
+  status: String,
   catatan: String,
-  aksesoris: Array,
   createdAt: String,
   createdBy: String,
   updatedAt: String,
@@ -377,7 +414,11 @@ Semua detail view (Aset, Pisau, Perawatan) menggunakan struktur yang identik:
 }
 ```
 
-### 7.4 Transisi Status Perawatan
+---
+
+## 8. Transisi Status
+
+### 8.1 Status Perawatan
 
 | Dari | Transisi yang Diizinkan |
 |------|--------------------------|
@@ -388,111 +429,118 @@ Semua detail view (Aset, Pisau, Perawatan) menggunakan struktur yang identik:
 | Selesai Diperbaiki | Perlu Diperbaiki |
 | Dibatalkan | Perlu Diperbaiki |
 
-Validasi wajib dilakukan kembali di backend ketika API tersedia. UI bukan batas keamanan.
+### 8.2 Auto Status Asset
+
+| Status Perawatan | Kondisi Asset |
+|------------------|---------------|
+| Dalam Perbaikan | Dalam Perbaikan |
+| Selesai Diperbaiki | Kondisi Baik |
+| Dibatalkan | (tidak berubah) |
 
 ---
 
-## 8. Tech Stack
+## 9. UI/UX Specifications
+
+### 9.1 Warna & Badge
+
+| Elemen | Warna |
+|--------|-------|
+| Badge Kondisi Baik | Hijau |
+| Badge Dalam Perbaikan | Oranye |
+| Badge Rusak | Merah |
+| Badge Tersedia | Hijau |
+| Badge Dipinjam | Kuning/Amber |
+| Badge Terlambat | Merah |
+| Tab Aktif | Biru (`border-blue-600 text-blue-600`) |
+| Tombol Utama | Oranye / Sky |
+| Tombol Edit | Biru |
+| Section Pisau | Slate/Hitam |
+| Section Aset | Biru |
+
+### 9.2 Responsive
+
+- Modal: `max-w-5xl`, scrollable `max-h-[90vh]`
+- Grid info: 2 kolom di desktop, 1 kolom di mobile
+- Tabel: horizontal scroll di mobile
+- Form: stack di mobile, grid di desktop
+
+---
+
+## 10. Tech Stack
 
 | Komponen | Teknologi |
 |----------|----------|
-| Framework | React 18+ |
-| Build Tool | Vite |
-| Styling | Tailwind CSS |
+| Framework | React 19 |
+| Build Tool | Vite 8 |
+| Styling | Tailwind CSS v4 |
 | Icons | Lucide React |
 | State Management | React useState/useMemo |
-| Data | Mock data (JSON) |
+| Persistence | localStorage |
+| Testing | Vitest |
 
 ---
 
-## 9. File Structure
+## 11. File Structure
 
 ```
 src/
 ├── App.jsx                    # Main app shell, routing, modals, state
 ├── components/
 │   ├── PisauView.jsx          # DataPisauView, PisauDetailModal, BorrowLogTable
-│   ├── PisauFormPage.jsx      # Form tambah/edit pisau
-│   ├── MaintenanceView.jsx    # MaintenanceView, MaintenanceDetailModal,
-│   │                          # MaintenanceFormModal, JadwalPerawatanTab,
-│   │                          # JadwalHistoryTimeline, MaintenanceLogList
+│   ├── PisauFormPage.jsx      # Form tambah/edit pisau (Pisau dulu → Aset & Part)
+│   ├── MaintenanceView.jsx    # MaintenanceView, MaintenanceFormModal (sparepart section)
 │   ├── AssetFormPage.jsx      # Form tambah/edit aset
 │   ├── PeminjamanView.jsx     # Daftar peminjaman
 │   └── SharedUI.jsx           # StatusBadge, PerawatanBadge
 ├── data/
-│   └── mockData.js            # Data constants, mock data, helper functions
+│   ├── mockData.js            # Data mock, helper functions, sample pisau (10 item)
+│   ├── domain.js              # Persistence, date utils, transisi status
+│   └── domain.test.js         # Test untuk domain functions
 └── docs/
     └── PRD-Improvement-Pisau-Perawatan.md  # Dokumen ini
 ```
 
 ---
 
-## 10. Changelog
+## 12. Acceptance Criteria
+
+### 12.1 Pisau
+
+1. Form input pisau menampilkan Spesifikasi Pisau (Step 1) sebelum Kebutuhan Aset & Part (Step 2).
+2. Tipe hanya menampilkan 2 opsi: Aset dan Part (tidak ada Keduanya).
+3. Jika tipe = Aset, field keuangan (depresiasi) ditampilkan.
+4. Jika tipe = Part, field stok ditampilkan dan keuangan disembunyikan.
+5. Pisau dengan tipe Aset bisa dipinjamkan.
+6. Pisau dengan tipe Part tidak bisa dipinjamkan.
+
+### 12.2 Sparepart di Perawatan
+
+1. Form perawatan menampilkan section "Sparepart yang Digunakan".
+2. User bisa memilih sparepart dari inventory (dropdown).
+3. User bisa input sparepart manual (nama, qty, satuan).
+4. Quantity dari inventory dibatasi oleh stok tersedia.
+5. Sparepart tersimpan di maintenance log.
+6. Sparepart ditampilkan di detail log perawatan.
+7. Item yang sudah dipilih tidak muncul lagi di dropdown.
+
+### 12.3 Auto Status
+
+1. Ketika status perawatan = "Dalam Perbaikan", kondisi asset otomatis berubah.
+2. Validasi: item harus dikembalikan jika sedang dipinjam sebelum masuk perbaikan.
+
+### 12.4 Detail View
+
+1. Semua detail view (Aset, Pisau) memiliki 3 tab: Informasi, Jadwal & Perawatan, Riwayat Pinjam.
+2. Tab Informasi menampilkan data lengkap item.
+3. Tab Jadwal menampilkan timeline + log perawatan.
+4. Tab Riwayat Pinjam menampilkan tabel sirkulasi.
+
+---
+
+## 13. Changelog
 
 | Tanggal | Versi | Perubahan |
 |---------|-------|-----------|
-| 16 Jul 2026 | 1.0 | Dokumen awal — Definisikan improvement Pisau sebagai Asset dan Perawatan |
-| 16 Jul 2026 | 1.1 | Tambah aturan domain, audit, stok, transisi status, persistence, dan acceptance criteria |
-
----
-
-## 11. Catatan Teknis
-
-### 11.1 Shared Components
-- `JadwalPerawatanTab` — Digunakan di PisauDetailModal, AssetDetailModal, MaintenanceDetailModal
-- `JadwalHistoryTimeline` — Digunakan di AssetDetailModal, MaintenanceDetailModal
-- `MaintenanceLogList` — Digunakan di AssetDetailModal, MaintenanceDetailModal, MaintenanceFormModal
-- `BorrowLogTable` — Digunakan di PisauDetailModal, MaintenanceDetailModal
-- `StatusBadge` — Badge kondisi dan peminjaman
-- `PerawatanBadge` — Badge status perawatan
-
-### 11.2 Konsistensi UI
-Semua detail view (Aset, Pisau, Perawatan) memiliki:
-- Struktur tab yang identik (Informasi, Jadwal & Perawatan, Riwayat Pinjam)
-- Field yang identik pada tab Informasi
-- Warna dan styling yang konsisten
-- Footer yang identik (tombol "Kembali" saja)
-
----
-
-## 12. Acceptance Criteria
-
-### 12.1 Pisau dan Peran Inventori
-
-1. **Given** pisau berperan `Keduanya`, **when** data diedit dan disimpan tanpa mengubah peran, **then** perannya tetap `Keduanya`.
-2. **Given** pisau berperan `Part`, **when** halaman peminjaman dibuka, **then** pisau tidak tersedia sebagai item peminjaman utama.
-3. **Given** pisau berperan `Part` atau `Keduanya`, **when** dipakai dalam kalkulasi, **then** quantity tidak dapat melebihi stok dan total dihitung dari harga satuan × quantity.
-
-### 12.2 Peminjaman
-
-1. **Given** item tersedia dan sehat, **when** peminjaman valid disimpan, **then** status menjadi `Dipinjam` dan log audit terbentuk.
-2. **Given** item rusak atau memiliki perawatan aktif, **when** user mencoba meminjam, **then** sistem menolak transaksi.
-3. **Given** deadline sebelum tanggal pinjam, **when** transaksi disimpan, **then** sistem menolak transaksi.
-4. **Given** transaksi aktif melewati deadline, **when** sistem dibuka atau tanggal dievaluasi, **then** status menjadi `Terlambat` otomatis.
-5. **Given** item dikembalikan, **when** tanggal kembali sebelum tanggal pinjam, **then** sistem menolak transaksi.
-
-### 12.3 Perawatan
-
-1. **Given** status `Normal`, **when** user memilih status selain `Perlu Diperbaiki`, **then** pilihan/transaksi ditolak.
-2. **Given** item masih dipinjam, **when** status hendak menjadi `Dalam Perbaikan` atau `Selesai Diperbaiki`, **then** sistem meminta pengembalian terlebih dahulu.
-3. **Given** status `Dibatalkan`, **when** catatan alasan kosong, **then** sistem menolak penyimpanan.
-4. **Given** status `Tertunda`, **when** kendala kosong, **then** sistem menolak penyimpanan.
-5. **Given** perawatan selesai, **when** transaksi disimpan, **then** log berstatus `Selesai Diperbaiki`, kondisi menjadi baik, status item menjadi `Normal`, dan jadwal berikutnya dihitung dari tanggal aktual selesai.
-
-### 12.4 Data dan Audit
-
-1. Perubahan prototype tetap tersedia setelah browser refresh melalui local storage.
-2. Kegagalan local storage tidak boleh membuat aplikasi crash.
-3. Setiap create/update menghasilkan metadata actor dan timestamp.
-4. Backend produksi wajib menerapkan autentikasi, otorisasi berbasis peran, validasi ulang, database transaction, object storage untuk file, dan audit log immutable.
-
-## 13. Batasan Prototype dan Target Produksi
-
-Versi React saat ini adalah prototype client-side. Local storage hanya untuk continuity demo, bukan sumber data produksi. Implementasi produksi memerlukan:
-
-- API dan database terpusat dengan optimistic locking/version field untuk mencegah double-loan.
-- Role minimal: Admin Inventori, PIC Perawatan, Peminjam, Viewer/Auditor.
-- Upload file tervalidasi berdasarkan MIME, ukuran, dan malware scanning.
-- Job terjadwal untuk overdue dan reminder maintenance.
-- Audit log immutable serta soft delete untuk aset dan transaksi.
-- Unit test aturan domain, integration test API, dan end-to-end test alur utama.
+| 16 Jul 2026 | 1.0 | Dokumen awal |
+| 16 Jul 2026 | 1.1 | Tambah aturan domain, audit, transisi status |
+| 20 Jul 2026 | 2.0 | **Major update:** Form pisau 2 tipe (Part/Aset), reorder form (pisau dulu), sparepart di perawatan, auto status asset, 10 sample pisau |
