@@ -14,6 +14,7 @@ import {
   getAssetTypeById,
   getAssetTypeByName,
 } from '../data/mockData';
+import { localDateString } from '../data/domain';
 
 const KATEGORI_OPTIONS = [
   { value: 'Aset', label: 'Aset', desc: 'Inventori aset tetap' },
@@ -185,7 +186,7 @@ export function AssetFormPage({ assetToEdit, onClose, onSave }) {
       depresiasiType: depresiasiJenis,
       depresiasiValue: Number(depresiasiNilai) || 0,
       masaManfaat: Number(masaManfaat) || 5,
-      tanggalBeli: tanggalBeli || new Date().toISOString().split('T')[0],
+      tanggalBeli: tanggalBeli || localDateString(),
       tanggalGaransi: tanggalGaransi || '',
       vendor: vendor || '-',
       catatan,

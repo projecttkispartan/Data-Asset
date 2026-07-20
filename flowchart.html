@@ -108,6 +108,14 @@
     /* SECTIONS */
     .section { display: none; }
     .section.active { display: block; }
+
+    /* NOTES */
+    .notes {
+      margin-top: 16px; padding: 12px 16px;
+      background: #fef3c7; border: 1px solid #fbbf24;
+      border-radius: 8px; font-size: 0.75rem; color: #92400e;
+    }
+    .notes strong { color: #78350f; }
   </style>
 </head>
 <body>
@@ -131,7 +139,11 @@
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header">Modul</div>
     <div class="sidebar-nav">
-      <div class="nav-item active" data-tab="nav" onclick="switchTab('nav')">
+      <div class="nav-item active" data-tab="overview" onclick="switchTab('overview')">
+        <span class="nav-icon">&#128202;</span>
+        <div><div class="nav-label">Gambaran Utuh</div><div class="nav-desc">Full Flowchart Lintas Modul</div></div>
+      </div>
+      <div class="nav-item" data-tab="nav" onclick="switchTab('nav')">
         <span class="nav-icon">&#127968;</span>
         <div><div class="nav-label">Navigasi</div><div class="nav-desc">Menu & Notifikasi</div></div>
       </div>
@@ -151,9 +163,21 @@
         <span class="nav-icon">&#128295;</span>
         <div><div class="nav-label">Perawatan</div><div class="nav-desc">Maintenance & Jadwal</div></div>
       </div>
+      <div class="nav-item" data-tab="master" onclick="switchTab('master')">
+        <span class="nav-icon">&#128196;</span>
+        <div><div class="nav-label">Master & Aturan</div><div class="nav-desc">Data Master & Validasi</div></div>
+      </div>
+      <div class="nav-item" data-tab="dataflow" onclick="switchTab('dataflow')">
+        <span class="nav-icon">&#128279;</span>
+        <div><div class="nav-label">Alur Data</div><div class="nav-desc">Shared Data & Single Source of Truth</div></div>
+      </div>
       <div class="nav-item" data-tab="status" onclick="switchTab('status')">
         <span class="nav-icon">&#128200;</span>
         <div><div class="nav-label">Status & Logic</div><div class="nav-desc">Transitions & Rules</div></div>
+      </div>
+      <div class="nav-item" data-tab="store" onclick="switchTab('store')">
+        <span class="nav-icon">&#128451;</span>
+        <div><div class="nav-label">Persistensi</div><div class="nav-desc">localStorage Structure</div></div>
       </div>
     </div>
     <div class="sidebar-footer">Mermaid v11</div>
@@ -164,8 +188,8 @@
     <!-- TOOLBAR -->
     <div class="toolbar">
       <div class="toolbar-left">
-        <div class="toolbar-title" id="toolbar-title">Navigasi & Notifikasi</div>
-        <div class="toolbar-desc" id="toolbar-desc">Menu utama, badge notifikasi, panel notif</div>
+        <div class="toolbar-title" id="toolbar-title">Gambaran Utuh — Full Flowchart</div>
+        <div class="toolbar-desc" id="toolbar-desc">Diagram lengkap data antar modul AsetKu</div>
       </div>
       <div class="toolbar-right">
         <button onclick="zoomIn()">+ Zoom</button>
@@ -177,18 +201,157 @@
 
     <!-- LEGEND -->
     <div class="legend" id="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div> Menu</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> Form</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div> Aksi Simpan</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div> Modal</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div> Keputusan</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#dbeafe;border:1px solid #2563eb"></div> Modul UI</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ffedd5;border:1px solid #ea580c"></div> Proses</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#dcfce7;border:1px solid #16a34a"></div> Data</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fef3c7;border:1px solid #d97706"></div> Aturan</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f3e8ff;border:1px solid #9333ea"></div> State</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f1f5f9;border:1px solid #64748b"></div> Muted</div>
     </div>
 
     <!-- CHART AREA -->
     <div class="chart-area" id="chart-area">
 
+      <!-- 0. OVERVIEW - Full Flowchart from FULL_FLOWCHART.md -->
+      <div class="section active" id="sec-overview">
+        <div class="chart-inner">
+          <div class="mermaid" id="chart-overview">
+flowchart LR
+  U([User]) --> NAV{Navigasi AsetKu}
+
+  subgraph UI[MODUL APLIKASI]
+    direction TB
+    HOME[Beranda<br/>dalam pengembangan]
+    ASET[Data Aset & Sparepart<br/>list · tambah · edit · detail · hapus]
+    PISAU[Pisau<br/>list · tambah · edit · detail · log]
+    PINJAM[Peminjaman<br/>form pinjam / kembali<br/>view tersedia tetapi menu tersembunyi]
+    RAWAT[Perawatan<br/>daftar · detail · catat / update]
+    NOTIF[Notifikasi Maintenance<br/>terlewat / jatuh tempo ≤ 7 hari]
+  end
+
+  NAV --> HOME
+  NAV --> ASET
+  NAV --> PISAU
+  NAV --> RAWAT
+  NAV -. route internal .-> PINJAM
+  NAV --> NOTIF
+
+  subgraph MASTER[MASTER & ATURAN DOMAIN]
+    direction TB
+    TYPE[Master Tipe Aset & Merek]
+    VENDOR[Master Vendor Service]
+    RULES{Validasi Terpusat<br/>peran · kondisi · status pinjam<br/>status perawatan · stok}
+    AUDIT[Audit Metadata<br/>createdAt/by · updatedAt/by]
+  end
+
+  TYPE --> ASET
+  TYPE --> PISAU
+  VENDOR --> RAWAT
+
+  subgraph PROCESS[PROSES LINTAS MODUL]
+    direction TB
+    ELIGIBLE{Boleh Dipinjam?<br/>peran Aset<br/>Tersedia + kondisi sehat<br/>tanpa perawatan aktif}
+    BORROW[Pinjam<br/>isi peminjam · tanggal · deadline<br/>aksesoris/sparepart · catatan]
+    RETURN[Kembalikan<br/>tanggal aktual · catatan]
+    MAINTAIN[Perbaikan<br/>PIC · status · lokasi/vendor<br/>jadwal · dokumen · kendala]
+    SCHEDULE[Jadwal Berikutnya<br/>tanggal selesai + interval]
+  end
+
+  ASET --> ELIGIBLE
+  PISAU -->|hanya peran Aset / Keduanya| ELIGIBLE
+  PINJAM --> ELIGIBLE
+  ELIGIBLE -->|Ya| BORROW
+  ELIGIBLE -->|sedang dipinjam / terlambat| RETURN
+  ELIGIBLE -->|Tidak| REJECT[Transaksi Ditolak]
+  ASET --> MAINTAIN
+  PISAU --> MAINTAIN
+  RAWAT --> MAINTAIN
+  MAINTAIN --> SCHEDULE
+
+  subgraph DATA[SHARED DATA / SINGLE SOURCE OF TRUTH]
+    direction TB
+    ASSETS[(assets<br/>Aset · Sparepart · Pisau<br/>lokasi · stok · jadwal<br/>3 state terpisah)]
+    BLOG[(borrowLogs<br/>surat jalan · peminjam<br/>deadline · kembali · aksesoris)]
+    MLOG[(maintenanceLogs<br/>PIC · vendor · status<br/>tanggal · dokumen · kendala)]
+  end
+
+  ASET <-->|CRUD kategori Aset / Sparepart| ASSETS
+  PISAU <-->|CRUD kategori Pisau<br/>peran Aset / Part / Keduanya| ASSETS
+  BORROW -->|statusPinjam = Dipinjam| ASSETS
+  BORROW -->|buat transaksi| BLOG
+  RETURN -->|statusPinjam = Tersedia| ASSETS
+  RETURN -->|status = Dikembalikan| BLOG
+  MAINTAIN -->|statusPerawatan + kondisi| ASSETS
+  MAINTAIN -->|buat log immutable| MLOG
+  SCHEDULE -->|jadwalMaintenance + interval| ASSETS
+  BLOG -->|deadline lewat otomatis| LATE[status = Terlambat]
+  LATE --> BLOG
+  BLOG -->|sinkron status item| ASSETS
+  ASSETS --> NOTIF
+  NOTIF -->|klik item| RAWAT
+  ASSETS --> RAWAT
+  BLOG --> ASET
+  BLOG --> PISAU
+  BLOG --> RAWAT
+  MLOG --> ASET
+  MLOG --> PISAU
+  MLOG --> RAWAT
+
+  RULES --> ELIGIBLE
+  RULES --> MAINTAIN
+  RULES --> ASET
+  RULES --> PISAU
+  AUDIT --> ASSETS
+  AUDIT --> BLOG
+  AUDIT --> MLOG
+
+  subgraph STATE[TRANSISI STATE UTAMA]
+    direction TB
+    BS1[Tersedia] -->|Pinjam| BS2[Dipinjam]
+    BS2 -->|deadline lewat| BS3[Terlambat]
+    BS2 -->|Kembali| BS1
+    BS3 -->|Kembali| BS1
+
+    MS1[Normal] --> MS2[Perlu Diperbaiki]
+    MS2 --> MS3[Dalam Perbaikan]
+    MS2 --> MS4[Tertunda]
+    MS3 --> MS4
+    MS4 --> MS3
+    MS3 --> MS5[Selesai Diperbaiki]
+    MS2 --> MS6[Dibatalkan]
+    MS4 --> MS6
+  end
+
+  subgraph STORE[PERSISTENCE LOKAL]
+    LS[(localStorage<br/>asetku.assets<br/>asetku.borrowLogs<br/>asetku.maintenanceLogs)]
+  end
+
+  ASSETS <--> LS
+  BLOG <--> LS
+  MLOG <--> LS
+
+  classDef module fill:#dbeafe,stroke:#2563eb,color:#172554
+  classDef process fill:#ffedd5,stroke:#ea580c,color:#431407
+  classDef data fill:#dcfce7,stroke:#16a34a,color:#052e16
+  classDef rule fill:#fef3c7,stroke:#d97706,color:#451a03
+  classDef state fill:#f3e8ff,stroke:#9333ea,color:#3b0764
+  classDef muted fill:#f1f5f9,stroke:#64748b,color:#0f172a
+
+  class HOME,ASET,PISAU,PINJAM,RAWAT,NOTIF module
+  class ELIGIBLE,BORROW,RETURN,MAINTAIN,SCHEDULE process
+  class ASSETS,BLOG,MLOG,LS data
+  class TYPE,VENDOR,RULES,AUDIT rule
+  class BS1,BS2,BS3,MS1,MS2,MS3,MS4,MS5,MS6 state
+  class REJECT,LATE muted
+          </div>
+          <div class="notes">
+            <strong>Catatan:</strong> <code>kondisi</code>, <code>statusPinjam</code>, dan <code>statusPerawatan</code> tetap tiga state berbeda. Sparepart biasa hanya menjadi stok/aksesoris transaksi, bukan item pinjaman utama.
+          </div>
+        </div>
+      </div>
+
       <!-- 1. NAV -->
-      <div class="section active" id="sec-nav">
+      <div class="section" id="sec-nav">
         <div class="chart-inner">
           <div class="mermaid" id="chart-nav">
 flowchart TD
@@ -254,6 +417,7 @@ flowchart TD
   DetailTab -->|Informasi| InfoAset[Data Umum + Lokasi + Depresiasi]
   DetailTab -->|Jadwal| JadwalTab[Jadwal Perawatan]
   DetailTab -->|Riwayat Pinjam| RiwayatPinjam[Riwayat Peminjaman]
+  DetailTab -->|Log Perawatan| LogPerawatan[Riwayat Maintenance]
   InfoAset --> AsetDetail
   JadwalTab -->|Simpan| UpdateJadwal[Update jadwalMaintenance]
   UpdateJadwal --> AsetDetail
@@ -399,7 +563,113 @@ flowchart TD
         </div>
       </div>
 
-      <!-- 6. STATUS -->
+      <!-- 6. MASTER & ATURAN -->
+      <div class="section" id="sec-master">
+        <div class="chart-inner">
+          <div class="mermaid" id="chart-master">
+flowchart TD
+  subgraph MASTER_DATA[MASTER DATA]
+    direction TB
+    TYPE[Tipe Aset<br/>Elektronik · Furniture · Tools · Lainnya]
+    MERK[Merek<br/>Brand per tipe]
+    VENDOR[Vendor Service<br/>Nama · Kontak · Spesialisasi]
+    KONDISI[Kondisi<br/>Baik · Perlu Perbaikan · Rusak]
+  end
+
+  subgraph VALIDASI[VALIDASI TERPUSAT]
+    direction TB
+    VR{Validasi Rule}
+    VR -->|Peran| VPeran[peranInventori: Aset / Part / Keduanya]
+    VR -->|Kondisi| VKondisi[kondisi harus valid]
+    VR -->|Status Pinjam| VPinjam[statusPinjam: Tersedia / Dipinjam / Terlambat]
+    VR -->|Status Perawatan| VMaint[statusPerawatan: Normal s.d. Selesai]
+    VR -->|Stok| VStok[stok ≥ 0]
+  end
+
+  subgraph AUDIT[AUDIT METADATA]
+    direction TB
+    CA[createdAt]
+    CB[createdBy]
+    UA[updatedAt]
+    UB[updatedBy]
+  end
+
+  TYPE --> ASET_MOD[Modul Aset]
+  TYPE --> PISAU_MOD[Modul Pisau]
+  MERK --> ASET_MOD
+  MERK --> PISAU_MOD
+  VENDOR --> RAWAT_MOD[Modul Perawatan]
+  KONDISI --> VR
+
+  ASET_MOD --> VR
+  PISAU_MOD --> VR
+
+  VR -->|Lolos| SIMPAN[Simpan Data]
+  VR -->|Gagal| ERROR[Tampilkan Error]
+
+  SIMPAN --> AUDIT
+  AUDIT --> ASSETS_DB[(assets)]
+  AUDIT --> BLOG_DB[(borrowLogs)]
+  AUDIT --> MLOG_DB[(maintenanceLogs)]
+
+  classDef master fill:#dbeafe,stroke:#2563eb,color:#172554
+  classDef rule fill:#fef3c7,stroke:#d97706,color:#451a03
+  classDef action fill:#10b981,stroke:#059669,color:#fff
+  classDef data fill:#dcfce7,stroke:#16a34a,color:#052e16
+  classDef error fill:#fee2e2,stroke:#dc2626,color:#7f1d1d
+  class TYPE,MERK,VENDOR,KONDISI master
+  class VR,VPeran,VKondisi,VPinjam,VMaint,VStok rule
+  class SIMPAN action
+  class ASSETS_DB,BLOG_DB,MLOG_DB data
+  class ERROR error
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. DATA FLOW -->
+      <div class="section" id="sec-dataflow">
+        <div class="chart-inner">
+          <div class="mermaid" id="chart-dataflow">
+flowchart LR
+  subgraph UI_MODUL[MODUL UI]
+    ASET_UI[Aset]
+    PISAU_UI[Pisau]
+    PINJAM_UI[Peminjaman]
+    RAWAT_UI[Perawatan]
+    NOTIF_UI[Notifikasi]
+  end
+
+  subgraph SHARED_DATA[SHARED DATA]
+    ASSETS[(assets<br/>id · nama · kategori · tipe<br/>merek · kondisi · stok<br/>lokasi · jadwal<br/>statusPinjam · statusPerawatan)]
+    BLOG[(borrowLogs<br/>id · assetId · peminjam<br/>tanggalPinjam · deadline<br/>tanggalKembali · status<br/>kodeSurat · aksesoris)]
+    MLOG[(maintenanceLogs<br/>id · assetId · PIC<br/>status · lokasi · vendor<br/>tanggalMulai · estimasi<br/>dokumen · kendala)]
+  end
+
+  ASET_UI <-->|CRUD Aset/Sparepart| ASSETS
+  PISAU_UI <-->|CRUD Pisau| ASSETS
+  PINJAM_UI -->|cek eligibility| ASSETS
+  PINJAM_UI -->|buat/read transaksi| BLOG
+  RAWAT_UI -->|buat/read log| MLOG
+  RAWAT_UI -->|baca jadwal| ASSETS
+  NOTIF_UI -->|baca status| ASSETS
+  NOTIF_UI -->|navigate ke| RAWAT_UI
+
+  BLOG -->|deadline lewat| LATE[status = Terlambat]
+  LATE --> BLOG
+  BLOG -->|sinkron status item| ASSETS
+
+  classDef ui fill:#dbeafe,stroke:#2563eb,color:#172554
+  classDef data fill:#dcfce7,stroke:#16a34a,color:#052e16
+  classDef process fill:#ffedd5,stroke:#ea580c,color:#431407
+
+  class ASET_UI,PISAU_UI,PINJAM_UI,RAWAT_UI,NOTIF_UI ui
+  class ASSETS,BLOG,MLOG data
+  class LATE process
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. STATUS -->
       <div class="section" id="sec-status">
         <div class="chart-inner">
           <div class="mermaid" id="chart-status">
@@ -476,6 +746,57 @@ flowchart TB
         </div>
       </div>
 
+      <!-- 9. PERSISTENSI -->
+      <div class="section" id="sec-store">
+        <div class="chart-inner">
+          <div class="mermaid" id="chart-store">
+flowchart TD
+  subgraph LS[localStorage]
+    direction TB
+    ASSETS_KEY["asetku.assets<br/>{<br/>id: string,<br/>nama: string,<br/>kategori: 'Aset' | 'Sparepart' | 'Pisau',<br/>tipe: string,<br/>merek: string,<br/>kondisi: 'Baik' | 'Perlu Perbaikan' | 'Rusak',<br/>stok: number,<br/>lokasi: object,<br/>jadwalMaintenance: object,<br/>statusPinjam: 'Tersedia' | 'Dipinjam' | 'Terlambat',<br/>statusPerawatan: 'Normal' | 'Perlu Diperbaiki' | ...,<br/>peranInventori: 'Aset' | 'Part' | 'Keduanya',<br/>depresiasiType: 'Persen' | 'Nominal',<br/>createdAt/by, updatedAt/by<br/>}"]
+    BLOG_KEY["asetku.borrowLogs<br/>{<br/>id: string,<br/>assetId: string,<br/>peminjam: string,<br/>tanggalPinjam: Date,<br/>deadline: Date,<br/>tanggalKembali: Date | null,<br/>status: 'Dipinjam' | 'Dikembalikan',<br/>kodeSurat: string,<br/>aksesoris: string,<br/>catatan: string,<br/>createdAt/by, updatedAt/by<br/>}"]
+    MLOG_KEY["asetku.maintenanceLogs<br/>{<br/>id: string,<br/>assetId: string,<br/>PIC: string,<br/>status: 'Perlu Diperbaiki' | 'Dalam Perbaikan' | ...,<br/>lokasi: 'Internal' | 'Eksternal',<br/>vendor: string | null,<br/>tanggalMulai: Date,<br/>estimasiSelesai: Date,<br/>tanggalSelesai: Date | null,<br/>dokumen: string,<br/>kendala: string,<br/>catatan: string,<br/>createdAt/by, updatedAt/by<br/>}"]
+  end
+
+  subgraph SYNC[SINKRONISASI]
+    direction TB
+    LOAD[Load from localStorage]
+    SAVE[Save to localStorage]
+    LISTEN[Storage Event Listener]
+  end
+
+  LOAD --> ASSETS_KEY
+  LOAD --> BLOG_KEY
+  LOAD --> MLOG_KEY
+  ASSETS_KEY --> SAVE
+  BLOG_KEY --> SAVE
+  MLOG_KEY --> SAVE
+  LISTEN --> LOAD
+
+  subgraph CRUD[OPERASI CRUD]
+    direction TB
+    CREATE[Create<br/>tambah item baru]
+    READ[Read<br/>ambil dari storage]
+    UPDATE[Update<br/>ubah field]
+    DELETE[Delete<br/>hapus item + relasi]
+  end
+
+  CREATE --> SAVE
+  READ --> LOAD
+  UPDATE --> SAVE
+  DELETE --> SAVE
+
+  classDef storage fill:#dcfce7,stroke:#16a34a,color:#052e16
+  classDef sync fill:#dbeafe,stroke:#2563eb,color:#172554
+  classDef crud fill:#ffedd5,stroke:#ea580c,color:#431407
+
+  class ASSETS_KEY,BLOG_KEY,MLOG_KEY storage
+  class LOAD,SAVE,LISTEN sync
+  class CREATE,READ,UPDATE,DELETE crud
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -496,24 +817,35 @@ flowchart TB
   });
 
   const tabData = {
-    nav:    { title: 'Navigasi & Notifikasi', desc: 'Menu utama, badge notifikasi, panel notif' },
-    aset:   { title: 'Data Aset', desc: 'CRUD lengkap: Tambah, Edit, Detail, Hapus, Pinjam/Kembali, Filter' },
-    pisau:  { title: 'Pisau', desc: 'CRUD khusus pisau, field tambahan, peran inventori, detail 3 tab' },
-    pinjam: { title: 'Peminjaman', desc: 'List aktif, filter status, form pinjam + kembali, proses transaksi' },
-    rawat:  { title: 'Perawatan', desc: 'Log perawatan, jadwal perawatan, form maintenance (Internal / Eksternal)' },
-    status: { title: 'Status & Logic', desc: 'Status transitions, canBorrow, peran pisau, depresiasi, filter, gudang' },
+    overview: { title: 'Gambaran Utuh — Full Flowchart', desc: 'Diagram lengkap data antar modul AsetKu' },
+    nav:      { title: 'Navigasi & Notifikasi', desc: 'Menu utama, badge notifikasi, panel notif' },
+    aset:     { title: 'Data Aset', desc: 'CRUD lengkap: Tambah, Edit, Detail, Hapus, Pinjam/Kembali, Filter' },
+    pisau:    { title: 'Pisau', desc: 'CRUD khusus pisau, field tambahan, peran inventori, detail 3 tab' },
+    pinjam:   { title: 'Peminjaman', desc: 'List aktif, filter status, form pinjam + kembali, proses transaksi' },
+    rawat:    { title: 'Perawatan', desc: 'Log perawatan, jadwal perawatan, form maintenance (Internal / Eksternal)' },
+    master:   { title: 'Master & Aturan', desc: 'Master data tipe, merek, vendor, validasi terpusat, audit metadata' },
+    dataflow: { title: 'Alur Data', desc: 'Shared data: assets, borrowLogs, maintenanceLogs — single source of truth' },
+    status:   { title: 'Status & Logic', desc: 'Status transitions, canBorrow, peran pisau, depresiasi, filter, gudang' },
+    store:    { title: 'Persistensi', desc: 'Struktur localStorage, sinkronisasi, operasi CRUD' },
   };
 
   const legendData = {
+    overview: [
+      ['#dbeafe','Modul UI'],['#ffedd5','Proses'],['#dcfce7','Data'],
+      ['#fef3c7','Aturan'],['#f3e8ff','State'],['#f1f5f9','Muted']
+    ],
     nav:    [['#3b82f6','Menu'],['#fbbf24','Keputusan']],
     aset:   [['#f59e0b','Form'],['#10b981','Simpan'],['#fbbf24','Validasi']],
     pisau:  [['#f59e0b','Form'],['#10b981','Simpan'],['#fbbf24','Validasi']],
     pinjam: [['#8b5cf6','Modal'],['#10b981','Proses'],['#fbbf24','Validasi']],
     rawat:  [['#f59e0b','Form'],['#10b981','Simpan'],['#fbbf24','Keputusan']],
+    master: [['#dbeafe','Master'],['#fef3c7','Validasi'],['#10b981','Simpan'],['#dcfce7','Data'],['#fee2e2','Error']],
+    dataflow: [['#dbeafe','UI'],['#dcfce7','Data'],['#ffedd5','Proses']],
     status: [['#fbbf24','Keputusan']],
+    store:  [['#dcfce7','Storage'],['#dbeafe','Sync'],['#ffedd5','CRUD']],
   };
 
-  let currentTab = 'nav';
+  let currentTab = 'overview';
   let zoomLevel = 1;
 
   function switchTab(tab) {
@@ -528,7 +860,7 @@ flowchart TB
     // Update legend
     const legendEl = document.getElementById('legend');
     legendEl.innerHTML = legendData[tab].map(([c,l]) =>
-      `<div class="legend-item"><div class="legend-dot" style="background:${c}"></div> ${l}</div>`
+      `<div class="legend-item"><div class="legend-dot" style="background:${c};border:1px solid ${c}"></div> ${l}</div>`
     ).join('');
 
     zoomReset();

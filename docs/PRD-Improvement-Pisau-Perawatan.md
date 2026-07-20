@@ -2,9 +2,9 @@
 
 ## Improvement: Pisau sebagai Asset & Perawatan
 
-**Versi:** 1.0
+**Versi:** 1.1
 **Tanggal:** 16 Juli 2026
-**Status:** Draft
+**Status:** Draft — Domain Rules Reviewed
 
 ---
 
@@ -261,6 +261,17 @@ Semua detail view (Aset, Pisau, Perawatan) menggunakan struktur yang identik:
 
 ## 7. Data Model
 
+### 7.0 Aturan Domain Wajib
+
+- `kondisi`, `statusPerawatan`, dan `statusPinjam` adalah tiga state berbeda dan tidak boleh saling menggantikan.
+- Item hanya dapat mulai dipinjam bila berperan Aset, berstatus `Tersedia`, tidak rusak, dan tidak sedang/perlu/tertunda perawatan.
+- Sparepart biasa bukan item peminjaman utama. Sparepart diperlakukan sebagai stok/aksesoris dan dicatat pada transaksi terkait.
+- `Terlambat` dihitung otomatis ketika transaksi belum kembali dan `deadlineKembali < tanggal hari ini`.
+- Pisau `Keduanya` selalu mempertahankan kemampuan Aset dan Part saat dibuat maupun diedit.
+- Status item kembali `Normal` setelah log `Selesai Diperbaiki` atau `Dibatalkan`; status akhir tetap tersimpan pada log perawatan.
+- Semua mutasi menyimpan `createdAt`, `createdBy`, `updatedAt`, dan `updatedBy`.
+- Semua tanggal operasional memakai tanggal lokal `YYYY-MM-DD`; timestamp audit memakai ISO 8601 UTC.
+
 ### 7.1 Asset
 ```javascript
 {
@@ -306,6 +317,11 @@ Semua detail view (Aset, Pisau, Perawatan) menggunakan struktur yang identik:
   depresiasiType: String,  // "Persen" | "Flat"
   depresiasiValue: Number,
   masaManfaat: Number,
+  stok: Number,           // untuk Sparepart/Pisau berperan Part; minimum 0
+  createdBy: String,
+  updatedBy: String,
+  createdAt: String,
+  updatedAt: String,
 }
 ```
 
@@ -335,6 +351,9 @@ Semua detail view (Aset, Pisau, Perawatan) menggunakan struktur yang identik:
   catatan: String,
   kendala: String,
   createdAt: String,        // ISO timestamp
+  createdBy: String,
+  updatedAt: String,
+  updatedBy: String,
 }
 ```
 
@@ -350,8 +369,26 @@ Semua detail view (Aset, Pisau, Perawatan) menggunakan struktur yang identik:
   tanggalKembali: String | null,
   status: String,           // "Dipinjam" | "Dikembalikan" | "Terlambat"
   catatan: String,
+  aksesoris: Array,
+  createdAt: String,
+  createdBy: String,
+  updatedAt: String,
+  updatedBy: String,
 }
 ```
+
+### 7.4 Transisi Status Perawatan
+
+| Dari | Transisi yang Diizinkan |
+|------|--------------------------|
+| Normal | Perlu Diperbaiki |
+| Perlu Diperbaiki | Dalam Perbaikan, Tertunda, Dibatalkan |
+| Dalam Perbaikan | Tertunda, Selesai Diperbaiki |
+| Tertunda | Dalam Perbaikan, Dibatalkan |
+| Selesai Diperbaiki | Perlu Diperbaiki |
+| Dibatalkan | Perlu Diperbaiki |
+
+Validasi wajib dilakukan kembali di backend ketika API tersedia. UI bukan batas keamanan.
 
 ---
 
@@ -395,6 +432,7 @@ src/
 | Tanggal | Versi | Perubahan |
 |---------|-------|-----------|
 | 16 Jul 2026 | 1.0 | Dokumen awal — Definisikan improvement Pisau sebagai Asset dan Perawatan |
+| 16 Jul 2026 | 1.1 | Tambah aturan domain, audit, stok, transisi status, persistence, dan acceptance criteria |
 
 ---
 
@@ -414,3 +452,47 @@ Semua detail view (Aset, Pisau, Perawatan) memiliki:
 - Field yang identik pada tab Informasi
 - Warna dan styling yang konsisten
 - Footer yang identik (tombol "Kembali" saja)
+
+---
+
+## 12. Acceptance Criteria
+
+### 12.1 Pisau dan Peran Inventori
+
+1. **Given** pisau berperan `Keduanya`, **when** data diedit dan disimpan tanpa mengubah peran, **then** perannya tetap `Keduanya`.
+2. **Given** pisau berperan `Part`, **when** halaman peminjaman dibuka, **then** pisau tidak tersedia sebagai item peminjaman utama.
+3. **Given** pisau berperan `Part` atau `Keduanya`, **when** dipakai dalam kalkulasi, **then** quantity tidak dapat melebihi stok dan total dihitung dari harga satuan × quantity.
+
+### 12.2 Peminjaman
+
+1. **Given** item tersedia dan sehat, **when** peminjaman valid disimpan, **then** status menjadi `Dipinjam` dan log audit terbentuk.
+2. **Given** item rusak atau memiliki perawatan aktif, **when** user mencoba meminjam, **then** sistem menolak transaksi.
+3. **Given** deadline sebelum tanggal pinjam, **when** transaksi disimpan, **then** sistem menolak transaksi.
+4. **Given** transaksi aktif melewati deadline, **when** sistem dibuka atau tanggal dievaluasi, **then** status menjadi `Terlambat` otomatis.
+5. **Given** item dikembalikan, **when** tanggal kembali sebelum tanggal pinjam, **then** sistem menolak transaksi.
+
+### 12.3 Perawatan
+
+1. **Given** status `Normal`, **when** user memilih status selain `Perlu Diperbaiki`, **then** pilihan/transaksi ditolak.
+2. **Given** item masih dipinjam, **when** status hendak menjadi `Dalam Perbaikan` atau `Selesai Diperbaiki`, **then** sistem meminta pengembalian terlebih dahulu.
+3. **Given** status `Dibatalkan`, **when** catatan alasan kosong, **then** sistem menolak penyimpanan.
+4. **Given** status `Tertunda`, **when** kendala kosong, **then** sistem menolak penyimpanan.
+5. **Given** perawatan selesai, **when** transaksi disimpan, **then** log berstatus `Selesai Diperbaiki`, kondisi menjadi baik, status item menjadi `Normal`, dan jadwal berikutnya dihitung dari tanggal aktual selesai.
+
+### 12.4 Data dan Audit
+
+1. Perubahan prototype tetap tersedia setelah browser refresh melalui local storage.
+2. Kegagalan local storage tidak boleh membuat aplikasi crash.
+3. Setiap create/update menghasilkan metadata actor dan timestamp.
+4. Backend produksi wajib menerapkan autentikasi, otorisasi berbasis peran, validasi ulang, database transaction, object storage untuk file, dan audit log immutable.
+
+## 13. Batasan Prototype dan Target Produksi
+
+Versi React saat ini adalah prototype client-side. Local storage hanya untuk continuity demo, bukan sumber data produksi. Implementasi produksi memerlukan:
+
+- API dan database terpusat dengan optimistic locking/version field untuk mencegah double-loan.
+- Role minimal: Admin Inventori, PIC Perawatan, Peminjam, Viewer/Auditor.
+- Upload file tervalidasi berdasarkan MIME, ukuran, dan malware scanning.
+- Job terjadwal untuk overdue dan reminder maintenance.
+- Audit log immutable serta soft delete untuk aset dan transaksi.
+- Unit test aturan domain, integration test API, dan end-to-end test alur utama.

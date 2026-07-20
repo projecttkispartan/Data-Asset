@@ -1,3 +1,5 @@
+import { localDateString, parseLocalDate } from './domain';
+
 export const formatRp = (angka) => {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0);
 };
@@ -122,6 +124,7 @@ export const UNIT_OPTIONS = ['Pcs', 'Set'];
 export const PERAN_INVENTORI_OPTIONS = [
   { value: 'Aset', label: 'Aset', desc: 'Bisa dipinjam & diperbaiki' },
   { value: 'Part', label: 'Part', desc: 'Bahan kalkulasi / BOM' },
+  { value: 'Keduanya', label: 'Keduanya', desc: 'Aset pinjam sekaligus bahan kalkulasi' },
 ];
 
 export const STATUS_PERAWATAN_OPTIONS = [
@@ -157,10 +160,15 @@ export function isPartRole(item) {
 
 export function canBorrow(item) {
   if (!item) return false;
-  if (item.kategori === 'Sparepart') return true;
   if (item.kategori === 'Aset') return true;
   if (item.kategori === 'Pisau') return isAsetRole(item);
   return false;
+}
+
+export function canStartBorrow(item) {
+  if (!canBorrow(item) || item.statusPinjam !== 'Tersedia') return false;
+  if (['Perlu Diperbaiki', 'Dalam Perbaikan', 'Tertunda'].includes(item.statusPerawatan)) return false;
+  return !['Rusak', 'Dalam Perbaikan'].includes(item.kondisi);
 }
 
 export function matchesKategoriFilter(asset, filter) {
@@ -218,7 +226,7 @@ export const mockAssets = [
   },
   {
     id: 3, kategori: 'Sparepart', kode: 'RAM - KINGSTON - 045', nama: 'RAM DDR4 16GB KINGSTON', assetTypeId: TYPE_ID.RAM, tipe: 'RAM', merk: 'KINGSTON', noSeri: 'CMK16GX4', noRegistrasi: '045', pemilikAsset: 'FTP', gudang: 'Gudang Sparepart FTP', area: 'Rak Sparepart A', rak: 'Baris 3', box: 'Kotak RAM-01', kondisi: 'Kondisi Baik', statusPinjam: 'Tersedia', namaPeminjam: null, tanggalPinjam: null, tanggalGaransi: '2025-11-20', gambar: null, catatan: 'Suku cadang upgrade memori PC',
-    statusPerawatan: 'Normal', biayaPerbaikan: 0,
+    statusPerawatan: 'Normal', biayaPerbaikan: 0, stok: 12,
     jadwalMaintenance: null, intervalMaintenanceHari: 0,
     createdAt: '2023-11-20T09:00:00'
   },
@@ -235,7 +243,7 @@ export const mockAssets = [
     tanggalBeli: '2024-01-10', tanggalGaransi: '2027-01-10', depresiasiType: 'Persen', depresiasiValue: 20, masaManfaat: 5,
     unit: 'Pcs', panjang: 120, lebar: 30, tinggi: 25, laminasi: 'Tidak', jumlahMata: 4, produk: 'Solid Wood', bahanBaku: 'Carbide',
     fungsi: ['Membuat Profil'], semuaFungsi: false,
-    peranInventori: 'Keduanya', statusPerawatan: 'Normal', biayaPerbaikan: 0,
+    peranInventori: 'Keduanya', statusPerawatan: 'Normal', biayaPerbaikan: 0, stok: 4,
     jadwalMaintenance: '2026-07-20', intervalMaintenanceHari: 90,
     pemilikAsset: 'Internal Wajib', gudang: 'Gudang Umum', area: 'Area C - Cutting Tools', rak: 'Rak Besi 04', box: '-',
     kondisi: 'Kondisi Baik', statusPinjam: 'Tersedia', namaPeminjam: null, tanggalPinjam: null,
@@ -267,7 +275,7 @@ export const mockAssets = [
     tanggalBeli: '', tanggalGaransi: '', depresiasiType: 'Persen', depresiasiValue: 0, masaManfaat: 0,
     unit: 'Set', panjang: 150, lebar: 25, tinggi: 20, laminasi: 'Tidak', jumlahMata: 6, produk: 'Plywood', bahanBaku: 'Carbide',
     fungsi: ['Membuat Alur', 'Membuat Profil', 'Finishing Potong'], semuaFungsi: false,
-    peranInventori: 'Part', statusPerawatan: 'Normal', biayaPerbaikan: 0,
+    peranInventori: 'Part', statusPerawatan: 'Normal', biayaPerbaikan: 0, stok: 18,
     jadwalMaintenance: null, intervalMaintenanceHari: 0,
     pemilikAsset: 'FTP', gudang: 'Gudang Sparepart FTP', area: 'Rak Pisau A', rak: 'Baris 1', box: 'Kotak P-03',
     kondisi: 'Kondisi Baik', statusPinjam: 'Tersedia', namaPeminjam: null, tanggalPinjam: null,
@@ -315,7 +323,7 @@ export const mockAssets = [
     tanggalBeli: '2024-02-02', tanggalGaransi: '2027-02-02', depresiasiType: 'Persen', depresiasiValue: 12, masaManfaat: 6,
     unit: 'Set', panjang: 90, lebar: 22, tinggi: 18, laminasi: 'Tidak', jumlahMata: 3, produk: 'MDF', bahanBaku: 'Carbide',
     fungsi: ['Membuat Profil', 'Router'], semuaFungsi: false,
-    peranInventori: 'Keduanya', statusPerawatan: 'Normal', biayaPerbaikan: 0,
+    peranInventori: 'Keduanya', statusPerawatan: 'Normal', biayaPerbaikan: 0, stok: 3,
     jadwalMaintenance: '2026-08-15', intervalMaintenanceHari: 90,
     pemilikAsset: 'TKI', gudang: 'Gudang Logistik TKI', area: 'Cutting Zone', rak: 'Rak 07', box: '-',
     kondisi: 'Kondisi Baik', statusPinjam: 'Tersedia', namaPeminjam: null, tanggalPinjam: null,
@@ -324,6 +332,70 @@ export const mockAssets = [
     gambar: null, gambarPerspektif: null, gambarPenampang: null, gambarProfil: null,
     filesTambahan: { Perencanaan: [], JPG: [], 'Pisau 3D': [], AUTOCAD: [], Lainnya: [] },
     createdAt: '2024-02-02T08:10:00'
+  },
+  {
+    id: 107, kategori: 'Pisau', assetTypeId: TYPE_ID.PISAU, tipe: 'PISAU', kode: 'KNF-RTR-60', nama: 'Router Bit 60°', merk: 'FREUD', vendor: 'CV-001', hargaBeli: 185000,
+    noSeri: 'SN-FREUD-RTR60', noRegistrasi: '007', catatan: 'Router bit untuk trimming acrylic',
+    tanggalBeli: '2024-06-15', tanggalGaransi: '2027-06-15', depresiasiType: 'Persen', depresiasiValue: 15, masaManfaat: 5,
+    unit: 'Pcs', panjang: 60, lebar: 12, tinggi: 12, laminasi: 'Tidak', jumlahMata: 2, produk: 'Acrylic', bahanBaku: 'Carbide',
+    fungsi: ['Router'], semuaFungsi: false,
+    peranInventori: 'Aset', statusPerawatan: 'Normal', biayaPerbaikan: 0,
+    jadwalMaintenance: '2026-10-01', intervalMaintenanceHari: 120,
+    pemilikAsset: 'Internal Wajib', gudang: 'Gudang Kantor Pusat', area: 'Lt. Produksi', rak: 'Rak Router', box: 'Box RTR-01',
+    kondisi: 'Kondisi Baik', statusPinjam: 'Tersedia', namaPeminjam: null, tanggalPinjam: null,
+    fotoUtama: mockPhoto('Router 60°', '#1e3a5f', '#38bdf8'),
+    gambarHasil: mockPhoto('Hasil Acrylic', '#4a1942', '#e879f9'),
+    gambar: null, gambarPerspektif: null, gambarPenampang: null, gambarProfil: null,
+    filesTambahan: { Perencanaan: [], JPG: [], 'Pisau 3D': [], AUTOCAD: [], Lainnya: [] },
+    createdAt: '2024-06-15T11:00:00'
+  },
+  {
+    id: 108, kategori: 'Pisau', assetTypeId: TYPE_ID.PISAU, tipe: 'PISAU', kode: 'KNF-SAW-300', nama: 'Circular Saw 300mm', merk: 'LEITZ', vendor: 'CSV-012', hargaBeli: 850000,
+    noSeri: 'SN-LEITZ-SAW300', noRegistrasi: '008', catatan: 'Gergaji melingkar untuk panel tebal',
+    tanggalBeli: '2024-03-20', tanggalGaransi: '2028-03-20', depresiasiType: 'Persen', depresiasiValue: 10, masaManfaat: 8,
+    unit: 'Pcs', panjang: 300, lebar: 3, tinggi: 60, laminasi: 'Ya', jumlahMata: 48, produk: 'Plywood', bahanBaku: 'HSS',
+    fungsi: ['Memotong Kayu', 'Finishing Potong'], semuaFungsi: false,
+    peranInventori: 'Aset', statusPerawatan: 'Normal', biayaPerbaikan: 0,
+    jadwalMaintenance: '2026-12-01', intervalMaintenanceHari: 180,
+    pemilikAsset: 'TKI', gudang: 'Gudang Utama TKI', area: 'Area Cutting Line 1', rak: 'Rak Besar', box: '-',
+    kondisi: 'Kondisi Baik', statusPinjam: 'Dipinjam', namaPeminjam: 'Rudi (Line 1)', tanggalPinjam: '2026-07-10',
+    fotoUtama: mockPhoto('Saw 300', '#1c1917', '#fbbf24'),
+    gambarHasil: mockPhoto('Hasil Panel', '#0c4a6e', '#67e8f9'),
+    gambar: null, gambarPerspektif: null, gambarPenampang: null, gambarProfil: null,
+    filesTambahan: { Perencanaan: [], JPG: [], 'Pisau 3D': [], AUTOCAD: [], Lainnya: [] },
+    createdAt: '2024-03-20T08:30:00'
+  },
+  {
+    id: 109, kategori: 'Pisau', assetTypeId: TYPE_ID.PISAU, tipe: 'PISAU', kode: 'KNF-BT-50', nama: 'Boring Tool 50mm', merk: 'BOSCH', vendor: '-', hargaBeli: 95000,
+    noSeri: 'SN-BOSCH-BT50', noRegistrasi: '009', catatan: 'Stok BOM untuk produksi massal',
+    tanggalBeli: '', tanggalGaransi: '', depresiasiType: 'Persen', depresiasiValue: 0, masaManfaat: 0,
+    unit: 'Pcs', panjang: 50, lebar: 18, tinggi: 18, laminasi: 'Tidak', jumlahMata: 1, produk: 'MDF', bahanBaku: 'Steel',
+    fungsi: ['Membuat Alur'], semuaFungsi: false,
+    peranInventori: 'Part', statusPerawatan: 'Normal', biayaPerbaikan: 0, stok: 32,
+    jadwalMaintenance: null, intervalMaintenanceHari: 0,
+    pemilikAsset: 'FTP', gudang: 'Gudang Sparepart FTP', area: 'Rak Boring', rak: 'Baris 5', box: 'Kotak BT-02',
+    kondisi: 'Kondisi Baik', statusPinjam: 'Tersedia', namaPeminjam: null, tanggalPinjam: null,
+    fotoUtama: mockPhoto('Boring 50', '#365314', '#a3e635'),
+    gambarHasil: mockPhoto('Hasil Boring', '#78350f', '#fdba74'),
+    gambar: null, gambarPerspektif: null, gambarPenampang: null, gambarProfil: null,
+    filesTambahan: { Perencanaan: [], JPG: [], 'Pisau 3D': [], AUTOCAD: [], Lainnya: [] },
+    createdAt: '2024-05-10T14:20:00'
+  },
+  {
+    id: 110, kategori: 'Pisau', assetTypeId: TYPE_ID.PISAU, tipe: 'PISAU', kode: 'KNF-GRP-120', nama: 'Pisau Greedy 120', merk: 'FESTOOL', vendor: 'CV-001', hargaBeli: 320000,
+    noSeri: 'SN-FESTOOL-GRP120', noRegistrasi: '010', catatan: 'Greedy knife untuk edge banding',
+    tanggalBeli: '2024-01-25', tanggalGaransi: '2026-01-25', depresiasiType: 'Persen', depresiasiValue: 20, masaManfaat: 4,
+    unit: 'Pcs', panjang: 120, lebar: 20, tinggi: 15, laminasi: 'Tidak', jumlahMata: 6, produk: 'Lainnya', bahanBaku: 'Carbide',
+    fungsi: ['Finishing Potong', 'PROFIL'], semuaFungsi: false,
+    peranInventori: 'Keduanya', statusPerawatan: 'Perlu Diperbaiki', biayaPerbaikan: 50000,
+    jadwalMaintenance: '2026-07-18', intervalMaintenanceHari: 60,
+    pemilikAsset: 'Internal Wajib', gudang: 'Gudang Umum', area: 'Area Edge Banding', rak: 'Rak 03', box: 'Box GRP-01',
+    kondisi: 'Tidak Berfungsi', statusPinjam: 'Tersedia', namaPeminjam: null, tanggalPinjam: null,
+    fotoUtama: mockPhoto('Greedy 120', '#4c1d95', '#c4b5fd'),
+    gambarHasil: mockPhoto('Hasil Edge', '#134e4a', '#5eead4'),
+    gambar: null, gambarPerspektif: null, gambarPenampang: null, gambarProfil: null,
+    filesTambahan: { Perencanaan: [], JPG: [], 'Pisau 3D': [], AUTOCAD: [], Lainnya: [] },
+    createdAt: '2024-01-25T16:00:00'
   },
 ];
 
@@ -521,20 +593,19 @@ export function getLatestMaintenanceLog(logs, assetId) {
 /** Hitung hint lama waktu (hari) dari tanggal mulai ke aktual */
 export function calcLamaWaktuHint(tanggalMulai, tanggalSelesaiAktual) {
   if (!tanggalMulai || !tanggalSelesaiAktual) return '';
-  const a = new Date(tanggalMulai);
-  const b = new Date(tanggalSelesaiAktual);
-  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return '';
-  const days = Math.max(0, Math.round((b - a) / (1000 * 60 * 60 * 24)));
+  const a = parseLocalDate(tanggalMulai);
+  const b = parseLocalDate(tanggalSelesaiAktual);
+  if (!a || !b) return '';
+  const days = Math.max(0, Math.round((b - a) / 86400000));
   return `${days} hari`;
 }
 
 /** Tambah N hari ke tanggal YYYY-MM-DD */
 export function addDaysToDate(dateStr, days) {
-  if (!dateStr) return null;
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return null;
+  const d = parseLocalDate(dateStr);
+  if (!d) return null;
   d.setDate(d.getDate() + Number(days || 0));
-  return d.toISOString().split('T')[0];
+  return localDateString(d);
 }
 
 /**
@@ -543,9 +614,10 @@ export function addDaysToDate(dateStr, days) {
  */
 export function getJadwalMaintenanceStatus(jadwalMaintenance, today = new Date()) {
   if (!jadwalMaintenance) return 'none';
-  const due = new Date(jadwalMaintenance);
-  if (Number.isNaN(due.getTime())) return 'none';
-  const t = new Date(today);
+  const due = parseLocalDate(jadwalMaintenance);
+  if (!due) return 'none';
+  const t = today instanceof Date ? new Date(today) : parseLocalDate(today);
+  if (!t) return 'none';
   t.setHours(0, 0, 0, 0);
   due.setHours(0, 0, 0, 0);
   const diffDays = Math.round((due - t) / (1000 * 60 * 60 * 24));
@@ -588,8 +660,10 @@ export function buildAssetPatchFromMaintenance(status) {
   if (status === 'Dalam Perbaikan') {
     patch.kondisi = 'Dalam Perbaikan';
   } else if (status === 'Selesai Diperbaiki') {
-    patch.statusPerawatan = 'Selesai Diperbaiki';
+    patch.statusPerawatan = 'Normal';
     patch.kondisi = 'Kondisi Baik';
+  } else if (status === 'Dibatalkan') {
+    patch.statusPerawatan = 'Normal';
   }
   return patch;
 }

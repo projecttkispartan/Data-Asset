@@ -1,11 +1,11 @@
 import { ArrowRightLeft, CornerDownLeft, Eye, PackageSearch } from 'lucide-react';
 import { StatusBadge } from './SharedUI';
-import { canBorrow } from '../data/mockData';
+import { canBorrow, canStartBorrow } from '../data/mockData';
 
 export function PeminjamanView({ assets, onBorrow, onViewDetail }) {
   const borrowable = assets.filter(canBorrow);
   const aktif = borrowable.filter((a) => a.statusPinjam === 'Dipinjam' || a.statusPinjam === 'Terlambat');
-  const tersedia = borrowable.filter((a) => a.statusPinjam === 'Tersedia');
+  const tersedia = borrowable.filter(canStartBorrow);
 
   return (
     <div className="space-y-6">

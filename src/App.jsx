@@ -1,8 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { 
   LayoutDashboard, 
   Box, 
-  Settings, 
   Plus, 
   Download, 
   Filter, 
@@ -29,13 +28,22 @@ import {
   ArrowRightLeft,
   History,
 } from 'lucide-react';
-import { formatRp, gudangOptionsByOwner, mockAssets, mockBorrowLogs, mockMaintenanceLogs, matchesKategoriFilter, canBorrow, isAsetRole, isPartRole, getMaintenanceNotifications } from './data/mockData';
+import { formatRp, mockAssets, mockBorrowLogs, mockMaintenanceLogs, matchesKategoriFilter, canBorrow, canStartBorrow, isAsetRole, isPartRole, getMaintenanceNotifications } from './data/mockData';
+import { localDateString, readStoredData, STORAGE_KEYS, syncBorrowLogStatuses, syncBorrowStatuses, withAuditMetadata, writeStoredData } from './data/domain';
 import { DataPisauView, PisauDetailModal, PisauLogModal } from './components/PisauView';
 import { PisauFormPage } from './components/PisauFormPage';
 import { AssetFormPage } from './components/AssetFormPage';
 import { PeminjamanView } from './components/PeminjamanView';
 import { MaintenanceView, MaintenanceFormModal, MaintenanceDetailModal, JadwalPerawatanTab, JadwalHistoryTimeline, MaintenanceLogList } from './components/MaintenanceView';
 import { StatusBadge } from './components/SharedUI';
+
+function usePersistentState(key, initialValue) {
+  const [value, setValue] = useState(() => readStoredData(key, initialValue));
+  useEffect(() => {
+    writeStoredData(key, value);
+  }, [key, value]);
+  return [value, setValue];
+}
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('data-aset');
@@ -51,16 +59,31 @@ export default function App() {
   const [showNotifPanel, setShowNotifPanel] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState(null);
-  const [assets, setAssets] = useState(mockAssets);
-  const [borrowLogs, setBorrowLogs] = useState(mockBorrowLogs);
-  const [maintenanceLogs, setMaintenanceLogs] = useState(mockMaintenanceLogs);
+  const [assets, setAssets] = usePersistentState(STORAGE_KEYS.assets, mockAssets);
+  const [borrowLogs, setBorrowLogs] = usePersistentState(STORAGE_KEYS.borrowLogs, mockBorrowLogs);
+  const [maintenanceLogs, setMaintenanceLogs] = usePersistentState(STORAGE_KEYS.maintenanceLogs, mockMaintenanceLogs);
+
+  useEffect(() => {
+    setBorrowLogs((previous) => {
+      const next = syncBorrowLogStatuses(previous);
+      return next.some((log, index) => log !== previous[index]) ? next : previous;
+    });
+  }, [setBorrowLogs]);
+
+  useEffect(() => {
+    setAssets((previous) => {
+      const next = syncBorrowStatuses(previous, borrowLogs);
+      const changed = next.some((asset, index) => asset !== previous[index]);
+      return changed ? next : previous;
+    });
+  }, [borrowLogs, setAssets]);
 
   const handleAddAsset = (newAsset) => {
-    setAssets((prev) => [newAsset, ...prev]);
+    setAssets((prev) => [withAuditMetadata(newAsset), ...prev]);
   };
 
   const handleUpdateAsset = (updatedAsset) => {
-    setAssets((prev) => prev.map((a) => (a.id === updatedAsset.id ? updatedAsset : a)));
+    setAssets((prev) => prev.map((a) => (a.id === updatedAsset.id ? withAuditMetadata(updatedAsset, a) : a)));
   };
 
   const handleDeleteAsset = (id) => {
@@ -70,7 +93,7 @@ export default function App() {
   };
 
   const handleMaintenanceSave = (log, assetPatch) => {
-    setMaintenanceLogs((prev) => [log, ...prev]);
+    setMaintenanceLogs((prev) => [withAuditMetadata(log), ...prev]);
     setAssets((prev) =>
       prev.map((a) =>
         a.id === assetPatch.id
@@ -84,6 +107,8 @@ export default function App() {
               ...(assetPatch.intervalMaintenanceHari !== undefined
                 ? { intervalMaintenanceHari: assetPatch.intervalMaintenanceHari }
                 : {}),
+              updatedAt: new Date().toISOString(),
+              updatedBy: 'local-demo-user',
             }
           : a
       )
@@ -115,8 +140,10 @@ export default function App() {
             ? {
                 ...log,
                 status: 'Dikembalikan',
-                tanggalKembali: meta.tanggalKembali || new Date().toISOString().split('T')[0],
+                tanggalKembali: meta.tanggalKembali || localDateString(),
                 catatan: meta.catatan || log.catatan,
+                updatedAt: new Date().toISOString(),
+                updatedBy: 'local-demo-user',
               }
             : log
         )
@@ -132,8 +159,13 @@ export default function App() {
           tanggalPinjam: updatedAsset.tanggalPinjam,
           deadlineKembali: meta.deadlineKembali || null,
           tanggalKembali: null,
-          status: 'Dipinjam',
+          status: meta.deadlineKembali && meta.deadlineKembali < localDateString() ? 'Terlambat' : 'Dipinjam',
           catatan: meta.catatan || '',
+          aksesoris: meta.aksesoris || [],
+          createdAt: new Date().toISOString(),
+          createdBy: 'local-demo-user',
+          updatedAt: new Date().toISOString(),
+          updatedBy: 'local-demo-user',
         },
         ...prev,
       ]);
@@ -507,6 +539,7 @@ export default function App() {
           }}
           onSaveJadwal={(updated) => {
             handleUpdateAsset(updated);
+            setSelectedAsset(updated);
           }}
         />
       )}
@@ -590,7 +623,16 @@ function DataAsetView({ assets, onAdd, onBorrow, onViewDetail, onDownload, onEdi
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filteredAssets.map((asset, index) => (
-              <tr key={asset.id} className="hover:bg-slate-50 transition-colors">
+              <tr
+                key={asset.id}
+                onClick={() => onViewDetail(asset)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') onViewDetail(asset);
+                }}
+                tabIndex={0}
+                className="hover:bg-slate-50 transition-colors cursor-pointer focus:outline-none focus:bg-blue-50/60"
+                title="Klik field mana pun untuk melihat detail"
+              >
                 <td className="px-4 py-3 text-center text-slate-500 font-medium">{index + 1}</td>
                 <td className="px-4 py-3">
                   <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center border border-slate-200 overflow-hidden">
@@ -640,12 +682,12 @@ function DataAsetView({ assets, onAdd, onBorrow, onViewDetail, onDownload, onEdi
                 </td>
                 <td className="px-4 py-3 text-slate-700 text-sm">{asset.namaPeminjam || '-'}</td>
                 <td className="px-4 py-3 text-slate-500 text-sm">{asset.tanggalPinjam || '-'}</td>
-                <td className="px-4 py-3 text-right">
+                <td className="px-4 py-3 text-right" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
                   <div className="inline-flex items-center bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
                     <button onClick={() => onViewDetail(asset)} className="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 border-r border-slate-200 transition-colors" title="Lihat Detail">
                       <Eye size={16} />
                     </button>
-                    {asset.statusPinjam === 'Tersedia' && canBorrow(asset) && (
+                    {canStartBorrow(asset) && (
                       <button onClick={() => onBorrow(asset)} className="p-2 text-blue-600 hover:bg-blue-50 border-r border-slate-200 transition-colors" title="Pinjam Aset">
                         <ArrowRightLeft size={16} />
                       </button>
@@ -1020,11 +1062,11 @@ function BorrowModal({ asset, assets, onClose, onSave }) {
   const [sparepartsList, setSparepartsList] = useState([]);
   
   const [tanggalPinjam, setTanggalPinjam] = useState(
-    asset?.tanggalPinjam || new Date().toISOString().split('T')[0]
+    asset?.tanggalPinjam || localDateString()
   );
   const [deadlineKembali, setDeadlineKembali] = useState('');
   const [tanggalKembali, setTanggalKembali] = useState(
-    isReturning ? new Date().toISOString().split('T')[0] : ''
+    isReturning ? localDateString() : ''
   );
   
   const [peminjam, setPeminjam] = useState(asset?.namaPeminjam || "");
@@ -1039,7 +1081,7 @@ function BorrowModal({ asset, assets, onClose, onSave }) {
     if (spData && !sparepartsList.find(s => s.id === spData.id)) {
       setSparepartsList([...sparepartsList, {
         ...spData,
-        tglPinjam: new Date().toISOString().split('T')[0],
+        tglPinjam: localDateString(),
         tglKembali: '',
         belumAdaJadwal: false
       }]);
@@ -1050,8 +1092,28 @@ function BorrowModal({ asset, assets, onClose, onSave }) {
   const updateSparepart = (id, field, value) => setSparepartsList(sparepartsList.map(s => s.id === id ? { ...s, [field]: value } : s));
 
   const handleActionSubmit = () => {
+    if (!isReturning && !canStartBorrow(asset)) {
+      alert('Item tidak dapat dipinjam karena kondisi atau status perawatannya.');
+      return;
+    }
     if (!peminjam && !isReturning) {
       alert("Mohon pilih karyawan/departemen peminjam.");
+      return;
+    }
+    if (!tanggalPinjam) {
+      alert('Tanggal pinjam wajib diisi.');
+      return;
+    }
+    if (!isReturning && !isMainNoJadwal && !deadlineKembali) {
+      alert('Isi perkiraan kembali atau pilih Belum jadwal.');
+      return;
+    }
+    if (!isReturning && deadlineKembali && deadlineKembali < tanggalPinjam) {
+      alert('Perkiraan kembali tidak boleh sebelum tanggal pinjam.');
+      return;
+    }
+    if (isReturning && (!tanggalKembali || tanggalKembali < tanggalPinjam)) {
+      alert('Tanggal kembali wajib diisi dan tidak boleh sebelum tanggal pinjam.');
       return;
     }
 
@@ -1067,6 +1129,9 @@ function BorrowModal({ asset, assets, onClose, onSave }) {
       deadlineKembali: isMainNoJadwal ? null : deadlineKembali,
       tanggalKembali: isReturning ? tanggalKembali : null,
       catatan,
+      aksesoris: sparepartsList.map(({ id, kode, nama, kategori, tglPinjam, tglKembali }) => ({
+        id, kode, nama, kategori, tglPinjam, tglKembali: tglKembali || null,
+      })),
     });
   };
 

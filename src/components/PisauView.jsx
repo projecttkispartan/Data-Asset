@@ -17,20 +17,10 @@ import {
   ShieldAlert,
   Info,
 } from 'lucide-react';
-import { formatRp, isAsetRole, isPartRole, canBorrow } from '../data/mockData';
+import { formatRp, isAsetRole, isPartRole, canBorrow, canStartBorrow } from '../data/mockData';
 import { StatusBadge } from './SharedUI';
 import { JadwalPerawatanTab } from './MaintenanceView';
-
-function formatDateTime(iso) {
-  if (!iso) return '-';
-  try {
-    return new Date(iso).toLocaleString('id-ID', {
-      day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-    });
-  } catch {
-    return iso;
-  }
-}
+import { DepreciationModal } from './PisauFormPage';
 
 function getFotoUtama(p) {
   return p?.fotoUtama || p?.gambar || p?.gambarPerspektif || null;
@@ -108,7 +98,6 @@ export function DataPisauView({
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [calcItems, setCalcItems] = useState([]);
 
   const pisauList = assets.filter((a) => a.kategori === 'Pisau');
   const filtered = pisauList.filter((p) => {
@@ -131,24 +120,9 @@ export function DataPisauView({
     total: pisauList.length,
     sebagaiAset: pisauList.filter((p) => isAsetRole(p)).length,
     sebagaiPart: pisauList.filter((p) => isPartRole(p)).length,
-    tersedia: pisauList.filter((p) => p.statusPinjam === 'Tersedia' && canBorrow(p)).length,
+    tersedia: pisauList.filter(canStartBorrow).length,
     dipinjam: pisauList.filter((p) => (p.statusPinjam === 'Dipinjam' || p.statusPinjam === 'Terlambat') && canBorrow(p)).length,
   };
-
-  const partOptions = pisauList.filter((p) => isPartRole(p));
-
-  const addCalcPart = (id) => {
-    const part = partOptions.find((p) => String(p.id) === String(id));
-    if (!part || calcItems.find((c) => c.id === part.id)) return;
-    setCalcItems([...calcItems, { id: part.id, kode: part.kode, nama: part.nama, harga: part.hargaBeli || 0, qty: 1 }]);
-  };
-
-  const updateCalcQty = (id, qty) => {
-    setCalcItems(calcItems.map((c) => (c.id === id ? { ...c, qty: Math.max(1, Number(qty) || 1) } : c)));
-  };
-
-  const removeCalc = (id) => setCalcItems(calcItems.filter((c) => c.id !== id));
-  const calcTotal = calcItems.reduce((sum, c) => sum + c.harga * c.qty, 0);
 
   return (
     <div className="space-y-6">
@@ -229,7 +203,16 @@ export function DataPisauView({
                 </tr>
               )}
               {pageItems.map((pisau, index) => (
-                <tr key={pisau.id} className="hover:bg-sky-50/40 transition-colors group">
+                <tr
+                  key={pisau.id}
+                  onClick={() => onViewDetail(pisau)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') onViewDetail(pisau);
+                  }}
+                  tabIndex={0}
+                  className="hover:bg-sky-50/40 transition-colors group cursor-pointer focus:outline-none focus:bg-sky-50/70"
+                  title="Klik field mana pun untuk melihat detail"
+                >
                   <td className="px-4 py-3 text-center text-slate-400 tabular-nums">{start + index + 1}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5">
@@ -268,13 +251,13 @@ export function DataPisauView({
                       <span className="text-[10px] text-slate-400 italic">Part only</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-right" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
                     <div className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-slate-50/80 p-1.5 shadow-inner">
                       <ActionIconButton icon={Eye} title="Detail" onClick={() => onViewDetail(pisau)} tone="slate" />
                       {canBorrow(pisau) && (
                         <ActionIconButton icon={History} title="Log" onClick={() => onViewLogs(pisau)} tone="violet" />
                       )}
-                      {canBorrow(pisau) && pisau.statusPinjam === 'Tersedia' && (
+                      {canStartBorrow(pisau) && (
                         <ActionIconButton icon={ArrowRightLeft} title="Pinjam" onClick={() => onBorrow(pisau)} tone="sky" />
                       )}
                       {canBorrow(pisau) && (pisau.statusPinjam === 'Dipinjam' || pisau.statusPinjam === 'Terlambat') && (
@@ -327,14 +310,16 @@ export function DataPisauView({
   );
 }
 
-export function PisauDetailModal({ asset, borrowLogs, onClose, onEdit, onBorrow, onSaveJadwal }) {
+export function PisauDetailModal({ asset, borrowLogs, onClose, onEdit, onSaveJadwal }) {
   const [tab, setTab] = useState('info');
+  const [showDepreciation, setShowDepreciation] = useState(false);
   if (!asset) return null;
 
   const logs = borrowLogs.filter((l) => l.assetId === asset.id);
   const utama = getFotoUtama(asset);
 
   return (
+    <>
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex justify-center items-center z-50 p-4 overflow-y-auto">
       <div className="bg-slate-50 rounded-2xl shadow-xl w-full max-w-5xl my-8 flex flex-col max-h-[90vh] overflow-hidden">
         <div className="px-8 py-5 border-b border-slate-200 flex justify-between items-center bg-white sticky top-0 z-10">
@@ -526,6 +511,17 @@ export function PisauDetailModal({ asset, borrowLogs, onClose, onEdit, onBorrow,
         </div>
       </div>
     </div>
+    {showDepreciation && (
+      <DepreciationModal
+        hargaBeli={Number(asset.hargaBeli) || 0}
+        jenis={asset.depresiasiType || 'Persen'}
+        nilai={Number(asset.depresiasiValue) || 0}
+        masa={Number(asset.masaManfaat) || 5}
+        tahunBeli={asset.tanggalBeli ? parseInt(asset.tanggalBeli.split('-')[0], 10) : new Date().getFullYear()}
+        onClose={() => setShowDepreciation(false)}
+      />
+    )}
+    </>
   );
 }
 

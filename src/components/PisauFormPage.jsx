@@ -21,6 +21,7 @@ import {
   getAssetTypeById,
   formatRp,
 } from '../data/mockData';
+import { localDateString } from '../data/domain';
 
 const KONDISI_OPTIONS = [
   'Kondisi Baik',
@@ -31,7 +32,7 @@ const KONDISI_OPTIONS = [
   'Terjual',
 ];
 
-function DepreciationModal({ hargaBeli, jenis, nilai, masa, tahunBeli, onClose }) {
+export function DepreciationModal({ hargaBeli, jenis, nilai, masa, tahunBeli, onClose }) {
   const rows = [];
   let currentHarga = hargaBeli;
   let akumulasi = 0;
@@ -250,9 +251,11 @@ export function PisauFormPage({ pisauToEdit, onClose, onSave }) {
   const [fungsiSelect, setFungsiSelect] = useState('');
   const [vendor, setVendor] = useState(pisauToEdit?.vendor || '');
   const [hargaBeli, setHargaBeli] = useState(pisauToEdit?.hargaBeli || '');
+  const [stok, setStok] = useState(pisauToEdit?.stok ?? 0);
   const [peranInventori, setPeranInventori] = useState(() => {
     const value = pisauToEdit?.peranInventori;
-    return value === 'Keduanya' ? 'Aset' : (value === 'Aset' || value === 'Part' ? value : 'Aset');
+    if (value === 'Part') return 'Part';
+    return 'Aset';
   });
   const [noSeri, setNoSeri] = useState(pisauToEdit?.noSeri || pisauToEdit?.kode || '');
   const [noRegistrasi, setNoRegistrasi] = useState(pisauToEdit?.noRegistrasi || '001');
@@ -277,7 +280,8 @@ export function PisauFormPage({ pisauToEdit, onClose, onSave }) {
   const [filesTambahan, setFilesTambahan] = useState(
     pisauToEdit?.filesTambahan || Object.fromEntries(FILE_TAMBAHAN_KATEGORI.map((k) => [k, []]))
   );
-  const showKeuangan = peranInventori === 'Aset' || pisauToEdit?.peranInventori === 'Keduanya';
+  const showKeuangan = peranInventori === 'Aset';
+  const showStok = peranInventori === 'Part';
 
   const addFungsi = (val) => {
     if (!val || fungsi.includes(val)) return;
@@ -321,7 +325,7 @@ export function PisauFormPage({ pisauToEdit, onClose, onSave }) {
     // Part-only: keep existing keuangan on edit; else empty defaults (like Sparepart)
     const keuanganPayload = showKeuangan
       ? {
-          tanggalBeli: tanggalBeli || new Date().toISOString().split('T')[0],
+          tanggalBeli: tanggalBeli || localDateString(),
           tanggalGaransi: tanggalGaransi || '',
           depresiasiType,
           depresiasiValue: Number(depresiasiValue) || 0,
@@ -355,6 +359,7 @@ export function PisauFormPage({ pisauToEdit, onClose, onSave }) {
       semuaFungsi,
       vendor: vendor || '-',
       hargaBeli: Number(hargaBeli) || 0,
+      stok: showStok ? Math.max(0, Number(stok) || 0) : 0,
       peranInventori,
       noSeri,
       noRegistrasi: noRegistrasi || '001',
@@ -437,194 +442,9 @@ export function PisauFormPage({ pisauToEdit, onClose, onSave }) {
         <div className={`${shell} space-y-5`}>
           <GroupIntro
             step="1"
-            tone="aset"
-            title="Informasi Aset"
-            subtitle="Inventori bersama — Data Aset, pinjam, lokasi, dan keuangan (jika peran Aset)."
-          />
-
-          <Section
-            tone="aset"
-            title="Inventori Aset"
-            hint="Peran, identitas inventori, dan lokasi gudang dalam satu bagian"
-            icon={<Package size={15} />}
-            badge={<Badge tone="aset">Aset</Badge>}
-          >
-            <div className="space-y-5">
-              <div>
-                <label className={labelClass}>Peran Inventori *</label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {PERAN_INVENTORI_OPTIONS.map((opt) => {
-                    const active = peranInventori === opt.value;
-                    return (
-                      <label
-                        key={opt.value}
-                        className={`cursor-pointer rounded-xl border p-3.5 transition-all duration-150 ${
-                          active
-                            ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
-                            : 'border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/40'
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="peranInventori"
-                          className="sr-only"
-                          checked={active}
-                          onChange={() => setPeranInventori(opt.value)}
-                        />
-                        <p className={`text-sm font-semibold ${active ? 'text-white' : 'text-slate-800'}`}>{opt.label}</p>
-                        <p className={`text-[11px] mt-0.5 leading-snug ${active ? 'text-blue-100' : 'text-slate-500'}`}>{opt.desc}</p>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-1 border-t border-slate-100">
-                <div className="space-y-4">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-blue-700">Identitas</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="sm:col-span-2">
-                      <label className={labelClass}>Nomor Seri *</label>
-                      <input value={noSeri} onChange={(e) => setNoSeri(e.target.value)} placeholder="Contoh: SN-KNF-001" className={fieldClass} />
-                    </div>
-                    <div>
-                      <label className={labelClass}>No. Registrasi *</label>
-                      <input value={noRegistrasi} onChange={(e) => setNoRegistrasi(e.target.value)} placeholder="001" className={`${fieldClass} font-semibold`} />
-                    </div>
-                    <div>
-                      <label className={labelClass}>Kondisi *</label>
-                      <select value={kondisi} onChange={(e) => setKondisi(e.target.value)} className={fieldClass}>
-                        {KONDISI_OPTIONS.map((k) => <option key={k} value={k}>{k}</option>)}
-                      </select>
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className={labelClass}>Catatan</label>
-                      <input value={catatan} onChange={(e) => setCatatan(e.target.value)} placeholder="Kelengkapan, dll." className={fieldClass} />
-                    </div>
-                    <div>
-                      <label className={labelClass}>Vendor</label>
-                      <input value={vendor} onChange={(e) => setVendor(e.target.value)} placeholder="CV-001" className={fieldClass} />
-                    </div>
-                    <div>
-                      <label className={labelClass}>Harga Beli</label>
-                      <div className="relative">
-                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">Rp</span>
-                        <input type="number" value={hargaBeli} onChange={(e) => setHargaBeli(e.target.value)} placeholder="0" className={`${fieldClass} pl-10`} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-blue-700">Lokasi Gudang</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className={labelClass}>Pemilik</label>
-                      <select
-                        value={pemilikAsset}
-                        onChange={(e) => {
-                          setPemilikAsset(e.target.value);
-                          setGudang(gudangOptionsByOwner[e.target.value][0]);
-                        }}
-                        className={fieldClass}
-                      >
-                        {Object.keys(gudangOptionsByOwner).map((o) => <option key={o} value={o}>{o}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className={labelClass}>Gudang</label>
-                      <select value={gudang} onChange={(e) => setGudang(e.target.value)} className={fieldClass}>
-                        {gudangOptionsByOwner[pemilikAsset].map((g) => <option key={g} value={g}>{g}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className={labelClass}>Area</label>
-                      <input value={area} onChange={(e) => setArea(e.target.value)} className={fieldClass} placeholder="Area C..." />
-                    </div>
-                    <div>
-                      <label className={labelClass}>Rak / Box</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <input value={rak} onChange={(e) => setRak(e.target.value)} className={fieldClass} placeholder="Rak" />
-                        <input value={box} onChange={(e) => setBox(e.target.value)} className={fieldClass} placeholder="Box" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Section>
-
-          {showKeuangan ? (
-            <Section
-              tone="aset"
-              title="Pembelian & Depresiasi"
-              hint="Aktif karena peran Aset / Keduanya"
-              icon={<Wallet size={15} />}
-              badge={<Badge tone="aset">Keuangan</Badge>}
-            >
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                  <div className="md:col-span-3">
-                    <label className={labelClass}>Tgl Pembelian</label>
-                    <input type="date" value={tanggalBeli} onChange={(e) => setTanggalBeli(e.target.value)} className={fieldClass} />
-                  </div>
-                  <div className="md:col-span-3">
-                    <label className={`${labelClass} text-rose-600`}>Tgl Masa Garansi</label>
-                    <input type="date" value={tanggalGaransi} onChange={(e) => setTanggalGaransi(e.target.value)} className={`${fieldClass} border-rose-200 bg-rose-50/20`} />
-                  </div>
-                  <div className="md:col-span-3">
-                    <label className={labelClass}>Masa Manfaat</label>
-                    <div className="relative">
-                      <input type="number" value={masaManfaat} onChange={(e) => setMasaManfaat(e.target.value)} className={fieldClass} />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">Tahun</span>
-                    </div>
-                  </div>
-                  <div className="md:col-span-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowDepreciationCalc(true)}
-                      className="w-full h-11 inline-flex items-center justify-center gap-2 px-4 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-xl hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors"
-                    >
-                      <Calculator size={16} /> Kalkulator
-                    </button>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3.5 rounded-xl bg-blue-50/50 border border-blue-100">
-                  <div>
-                    <label className={labelClass}>Tipe Nilai Depresiasi</label>
-                    <select value={depresiasiType} onChange={(e) => setDepresiasiType(e.target.value)} className={fieldClass}>
-                      <option value="Persen">Persen (%)</option>
-                      <option value="Nominal">Nominal (Rp)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className={labelClass}>Nilai Depresiasi</label>
-                    <div className="relative">
-                      {depresiasiType === 'Nominal' && <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">Rp</span>}
-                      <input
-                        type="number"
-                        value={depresiasiValue}
-                        onChange={(e) => setDepresiasiValue(e.target.value)}
-                        placeholder="0"
-                        className={`${fieldClass} ${depresiasiType === 'Nominal' ? 'pl-10' : 'pr-10'}`}
-                      />
-                      {depresiasiType === 'Persen' && <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">%</span>}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Section>
-          ) : (
-            <div className="rounded-2xl border border-dashed border-blue-200 bg-blue-50/30 px-5 py-3.5 text-sm text-slate-600 border-l-4 border-l-blue-400">
-              Peran <span className="font-semibold text-slate-800">Part</span> — keuangan disembunyikan. Data lama tetap disimpan jika ada.
-            </div>
-          )}
-
-          <GroupIntro
-            step="2"
             tone="pisau"
             title="Informasi Pisau"
-            subtitle="Spesifikasi teknis cutting tool — khusus modul Pisau."
+            subtitle="Spesifikasi teknis cutting tool — data produk, dimensi, dan fungsi."
           />
 
           <Section
@@ -805,13 +625,204 @@ export function PisauFormPage({ pisauToEdit, onClose, onSave }) {
               })}
             </div>
           </Section>
+
+          <GroupIntro
+            step="2"
+            tone="aset"
+            title="Kebutuhan Aset & Part"
+            subtitle="Tipe inventori, identitas, lokasi gudang, dan keuangan."
+          />
+
+          <Section
+            tone="aset"
+            title="Inventori Aset"
+            hint="Tipe, identitas inventori, dan lokasi gudang dalam satu bagian"
+            icon={<Package size={15} />}
+            badge={<Badge tone="aset">Aset</Badge>}
+          >
+            <div className="space-y-5">
+              <div>
+                <label className={labelClass}>Tipe *</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {PERAN_INVENTORI_OPTIONS.filter((opt) => opt.value !== 'Keduanya').map((opt) => {
+                    const active = peranInventori === opt.value;
+                    return (
+                      <label
+                        key={opt.value}
+                        className={`cursor-pointer rounded-xl border p-3.5 transition-all duration-150 ${
+                          active
+                            ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
+                            : 'border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/40'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="peranInventori"
+                          className="sr-only"
+                          checked={active}
+                          onChange={() => setPeranInventori(opt.value)}
+                        />
+                        <p className={`text-sm font-semibold ${active ? 'text-white' : 'text-slate-800'}`}>{opt.label}</p>
+                        <p className={`text-[11px] mt-0.5 leading-snug ${active ? 'text-blue-100' : 'text-slate-500'}`}>{opt.desc}</p>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-1 border-t border-slate-100">
+                <div className="space-y-4">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-blue-700">Identitas</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="sm:col-span-2">
+                      <label className={labelClass}>Nomor Seri *</label>
+                      <input value={noSeri} onChange={(e) => setNoSeri(e.target.value)} placeholder="Contoh: SN-KNF-001" className={fieldClass} />
+                    </div>
+                    <div>
+                      <label className={labelClass}>No. Registrasi *</label>
+                      <input value={noRegistrasi} onChange={(e) => setNoRegistrasi(e.target.value)} placeholder="001" className={`${fieldClass} font-semibold`} />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Kondisi *</label>
+                      <select value={kondisi} onChange={(e) => setKondisi(e.target.value)} className={fieldClass}>
+                        {KONDISI_OPTIONS.map((k) => <option key={k} value={k}>{k}</option>)}
+                      </select>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className={labelClass}>Catatan</label>
+                      <input value={catatan} onChange={(e) => setCatatan(e.target.value)} placeholder="Kelengkapan, dll." className={fieldClass} />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Vendor</label>
+                      <input value={vendor} onChange={(e) => setVendor(e.target.value)} placeholder="CV-001" className={fieldClass} />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Harga Beli</label>
+                      <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">Rp</span>
+                        <input type="number" value={hargaBeli} onChange={(e) => setHargaBeli(e.target.value)} placeholder="0" className={`${fieldClass} pl-10`} />
+                      </div>
+                    </div>
+                    {showStok && (
+                      <div>
+                        <label className={labelClass}>Stok Tersedia</label>
+                        <input type="number" min="0" value={stok} onChange={(e) => setStok(e.target.value)} placeholder="0" className={fieldClass} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-blue-700">Lokasi Gudang</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className={labelClass}>Pemilik</label>
+                      <select
+                        value={pemilikAsset}
+                        onChange={(e) => {
+                          setPemilikAsset(e.target.value);
+                          setGudang(gudangOptionsByOwner[e.target.value][0]);
+                        }}
+                        className={fieldClass}
+                      >
+                        {Object.keys(gudangOptionsByOwner).map((o) => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelClass}>Gudang</label>
+                      <select value={gudang} onChange={(e) => setGudang(e.target.value)} className={fieldClass}>
+                        {gudangOptionsByOwner[pemilikAsset].map((g) => <option key={g} value={g}>{g}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelClass}>Area</label>
+                      <input value={area} onChange={(e) => setArea(e.target.value)} className={fieldClass} placeholder="Area C..." />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Rak / Box</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input value={rak} onChange={(e) => setRak(e.target.value)} className={fieldClass} placeholder="Rak" />
+                        <input value={box} onChange={(e) => setBox(e.target.value)} className={fieldClass} placeholder="Box" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Section>
+
+          {showKeuangan ? (
+            <Section
+              tone="aset"
+              title="Pembelian & Depresiasi"
+              hint="Aktif karena peran Aset"
+              icon={<Wallet size={15} />}
+              badge={<Badge tone="aset">Keuangan</Badge>}
+            >
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                  <div className="md:col-span-3">
+                    <label className={labelClass}>Tgl Pembelian</label>
+                    <input type="date" value={tanggalBeli} onChange={(e) => setTanggalBeli(e.target.value)} className={fieldClass} />
+                  </div>
+                  <div className="md:col-span-3">
+                    <label className={`${labelClass} text-rose-600`}>Tgl Masa Garansi</label>
+                    <input type="date" value={tanggalGaransi} onChange={(e) => setTanggalGaransi(e.target.value)} className={`${fieldClass} border-rose-200 bg-rose-50/20`} />
+                  </div>
+                  <div className="md:col-span-3">
+                    <label className={labelClass}>Masa Manfaat</label>
+                    <div className="relative">
+                      <input type="number" value={masaManfaat} onChange={(e) => setMasaManfaat(e.target.value)} className={fieldClass} />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">Tahun</span>
+                    </div>
+                  </div>
+                  <div className="md:col-span-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowDepreciationCalc(true)}
+                      className="w-full h-11 inline-flex items-center justify-center gap-2 px-4 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-xl hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-colors"
+                    >
+                      <Calculator size={16} /> Kalkulator
+                    </button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3.5 rounded-xl bg-blue-50/50 border border-blue-100">
+                  <div>
+                    <label className={labelClass}>Tipe Nilai Depresiasi</label>
+                    <select value={depresiasiType} onChange={(e) => setDepresiasiType(e.target.value)} className={fieldClass}>
+                      <option value="Persen">Persen (%)</option>
+                      <option value="Nominal">Nominal (Rp)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Nilai Depresiasi</label>
+                    <div className="relative">
+                      {depresiasiType === 'Nominal' && <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">Rp</span>}
+                      <input
+                        type="number"
+                        value={depresiasiValue}
+                        onChange={(e) => setDepresiasiValue(e.target.value)}
+                        placeholder="0"
+                        className={`${fieldClass} ${depresiasiType === 'Nominal' ? 'pl-10' : 'pr-10'}`}
+                      />
+                      {depresiasiType === 'Persen' && <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">%</span>}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Section>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-blue-200 bg-blue-50/30 px-5 py-3.5 text-sm text-slate-600 border-l-4 border-l-blue-400">
+              Peran <span className="font-semibold text-slate-800">Part</span> — keuangan disembunyikan. Data lama tetap disimpan jika ada.
+            </div>
+          )}
         </div>
       </div>
 
       <div className="fixed bottom-0 right-0 left-0 md:left-64 z-30 border-t border-slate-200/80 bg-white/95 backdrop-blur-md px-6 lg:px-8 py-3.5">
         <div className={`${shell} flex justify-between items-center gap-3`}>
           <p className="text-xs text-slate-400 hidden sm:block">
-            * wajib · Bagian 1 Aset · Bagian 2 Pisau
+            * wajib · Bagian 1 Pisau · Bagian 2 Aset & Part
           </p>
           <div className="flex items-center gap-2 ml-auto">
             <button type="button" onClick={onClose} className="px-5 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">

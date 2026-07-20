@@ -14,9 +14,15 @@ import {
   AlertTriangle,
   CalendarClock,
   Clock,
-  Info,
   ShieldAlert,
   Edit,
+  X,
+  Save,
+  ArrowLeft,
+  FilePlus2,
+  Trash2,
+  Package,
+  PlusCircle,
 } from 'lucide-react';
 import {
   STATUS_PERAWATAN_OPTIONS,
@@ -32,7 +38,9 @@ import {
   getMaintenanceNotifications,
   formatRp,
   canBorrow,
+  isPartRole,
 } from '../data/mockData';
+import { getAllowedMaintenanceTransitions, isMaintenanceTransitionAllowed, localDateString } from '../data/domain';
 import { PerawatanBadge, StatusBadge } from './SharedUI';
 import { BorrowLogTable } from './PisauView';
 
@@ -60,7 +68,9 @@ function MaintenanceLogDetailModal({ log, onClose }) {
             <h3 className="text-sm font-bold text-slate-800">Detail Log Perbaikan</h3>
             <p className="text-[11px] text-slate-500 mt-0.5">{log.assetKode || 'Log perawatan'}</p>
           </div>
-          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl leading-none">&times;</button>
+          <button type="button" onClick={onClose} aria-label="Tutup detail log" className="inline-flex size-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/30">
+            <X size={17} />
+          </button>
         </div>
         <div className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2">
@@ -112,10 +122,30 @@ function MaintenanceLogDetailModal({ log, onClose }) {
               <p className="text-xs text-slate-700 mt-1 whitespace-pre-wrap leading-relaxed">{log.catatan}</p>
             </div>
           )}
+
+          {log.spareparts && log.spareparts.length > 0 && (
+            <div className="rounded-xl border border-sky-200 bg-sky-50/60 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-sky-700 flex items-center gap-1.5">
+                <Package size={12} /> Sparepart yang Digunakan
+              </p>
+              <div className="mt-2 space-y-1.5">
+                {log.spareparts.map((s, i) => (
+                  <div key={i} className="flex items-center gap-2 text-xs">
+                    <span className={`shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold ${s.type === 'asset' ? 'bg-blue-100 text-blue-700' : 'bg-violet-100 text-violet-700'}`}>
+                      {s.type === 'asset' ? 'INV' : 'TXT'}
+                    </span>
+                    <span className="font-medium text-slate-800">{s.nama}</span>
+                    {s.kode && <span className="text-slate-400 font-mono">({s.kode})</span>}
+                    <span className="ml-auto font-semibold text-slate-600">{s.qty} {s.satuan}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         <div className="px-5 py-3 border-t border-slate-200 flex justify-end bg-slate-50">
-          <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium bg-slate-100 rounded-lg hover:bg-slate-200">
-            Tutup
+          <button type="button" onClick={onClose} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-400/30">
+            <X size={15} /> Tutup
           </button>
         </div>
       </div>
@@ -184,7 +214,7 @@ export function JadwalHistoryTimeline({ asset, logs }) {
             <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-slate-200" />
 
             <div className="space-y-4">
-              {entries.map((entry, idx) => {
+              {entries.map((entry) => {
                 const isSelesai = entry.status === 'Selesai Diperbaiki';
                 const isTerlambat = entry.tanggalAktual && entry.estimasiSelesai && entry.tanggalAktual > entry.estimasiSelesai;
                 return (
@@ -262,7 +292,9 @@ export function MaintenanceDetailModal({ asset, maintenanceLogs, borrowLogs, onC
           </div>
           <div className="flex items-center gap-2">
             <PerawatanBadge status={asset.statusPerawatan} />
-            <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 text-xl leading-none">&times;</button>
+            <button onClick={onClose} aria-label="Tutup detail perawatan" className="inline-flex size-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/30">
+              <X size={18} />
+            </button>
           </div>
         </div>
 
@@ -292,7 +324,7 @@ export function MaintenanceDetailModal({ asset, maintenanceLogs, borrowLogs, onC
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                 <h3 className="text-sm font-bold text-slate-700">Informasi Umum & Lokasi</h3>
-                <button onClick={onEdit} className="flex items-center gap-2 px-3 py-1.5 bg-orange-50 text-orange-700 border border-orange-200 rounded-lg text-xs font-medium hover:bg-orange-100 transition-colors">
+                <button onClick={onEdit} className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2 text-xs font-semibold text-blue-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-100 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500/30">
                   <Edit size={14} /> Ubah
                 </button>
               </div>
@@ -428,9 +460,9 @@ export function MaintenanceDetailModal({ asset, maintenanceLogs, borrowLogs, onC
                   <button
                     type="button"
                     onClick={onUpdatePerbaikan}
-                    className="text-xs font-semibold text-orange-700 bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-lg hover:bg-orange-100"
+                    className="inline-flex items-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-3.5 py-2 text-xs font-semibold text-orange-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-100 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-orange-500/30"
                   >
-                    Catat Perbaikan
+                    <Wrench size={14} /> Catat Perbaikan
                   </button>
                 </div>
                 <div className="p-5">
@@ -449,11 +481,11 @@ export function MaintenanceDetailModal({ asset, maintenanceLogs, borrowLogs, onC
           <button
             type="button"
             onClick={onUpdatePerbaikan}
-            className="px-4 py-2 text-sm font-semibold bg-orange-600 text-white rounded-xl hover:bg-orange-700 flex items-center gap-1.5"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-amber-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange-200 transition-all hover:-translate-y-0.5 hover:from-orange-700 hover:to-amber-600 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:ring-offset-2"
           >
             <Wrench size={14} /> Catat Perbaikan
           </button>
-          <button onClick={onClose} className="px-5 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50">Kembali</button>
+          <button onClick={onClose} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-400/30"><ArrowLeft size={15} /> Kembali</button>
         </div>
       </div>
     </div>
@@ -649,7 +681,7 @@ export function MaintenanceFormModal({
   const selected = assets.find((a) => a.id === Number(assetId) || a.id === assetId) || null;
 
   const [pic, setPic] = useState('');
-  const [tanggalMulai, setTanggalMulai] = useState(new Date().toISOString().split('T')[0]);
+  const [tanggalMulai, setTanggalMulai] = useState(localDateString());
   const [estimasiSelesai, setEstimasiSelesai] = useState('');
   const [tanggalSelesaiAktual, setTanggalSelesaiAktual] = useState('');
   const [lamaWaktuPerbaikan, setLamaWaktuPerbaikan] = useState('');
@@ -670,10 +702,53 @@ export function MaintenanceFormModal({
   const [nextMaintenanceDate, setNextMaintenanceDate] = useState('');
   const [nextMaintenanceInterval, setNextMaintenanceInterval] = useState('');
   const [selectedLogDetail, setSelectedLogDetail] = useState(null);
+  const [spareparts, setSpareparts] = useState([]);
+  const [manualPartName, setManualPartName] = useState('');
+  const [manualPartQty, setManualPartQty] = useState(1);
+  const [manualPartSatuan, setManualPartSatuan] = useState('Pcs');
+  const [manualPartCatatan, setManualPartCatatan] = useState('');
 
   const selectedVendor = getVendorById(vendorId);
   const isEksternal = lokasiTipe === 'Eksternal';
   const isSelesai = status === 'Selesai Diperbaiki';
+  const allowedStatuses = getAllowedMaintenanceTransitions(selected?.statusPerawatan || 'Normal');
+
+  const sparepartOptions = assets.filter((a) => isPartRole(a));
+
+  const addSparepartFromAsset = (id) => {
+    const asset = sparepartOptions.find((a) => String(a.id) === String(id));
+    if (!asset || spareparts.some((s) => s.type === 'asset' && s.assetId === asset.id)) return;
+    setSpareparts([...spareparts, {
+      type: 'asset',
+      assetId: asset.id,
+      kode: asset.kode,
+      nama: asset.nama,
+      qty: 1,
+      maxQty: asset.stok ?? 1,
+      satuan: asset.unit || 'Pcs',
+    }]);
+  };
+
+  const updateSparepartQty = (idx, qty) => {
+    setSpareparts(spareparts.map((s, i) => i === idx ? { ...s, qty: Math.min(s.maxQty || 999, Math.max(1, Number(qty) || 1)) } : s));
+  };
+
+  const addManualSparepart = () => {
+    if (!manualPartName.trim()) return;
+    setSpareparts([...spareparts, {
+      type: 'manual',
+      nama: manualPartName.trim(),
+      qty: Math.max(1, Number(manualPartQty) || 1),
+      satuan: manualPartSatuan,
+      catatan: manualPartCatatan.trim(),
+    }]);
+    setManualPartName('');
+    setManualPartQty(1);
+    setManualPartSatuan('Pcs');
+    setManualPartCatatan('');
+  };
+
+  const removeSparepart = (idx) => setSpareparts(spareparts.filter((_, i) => i !== idx));
 
   const itemLogs = useMemo(() => {
     if (!selected) return [];
@@ -705,7 +780,7 @@ export function MaintenanceFormModal({
     } else {
       setNextMaintenanceDate('');
     }
-  }, [selected?.id, selected?.jadwalMaintenance, selected?.intervalMaintenanceHari, tanggalMulai, tanggalSelesaiAktual, isSelesai]);
+  }, [selected, tanggalMulai, tanggalSelesaiAktual, isSelesai]);
 
   const fieldClass =
     'w-full h-11 px-3.5 border border-slate-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-orange-500/20 focus:border-orange-400 outline-none transition-all';
@@ -751,12 +826,41 @@ export function MaintenanceFormModal({
       alert('Mohon isi PIC, tanggal mulai, dan estimasi selesai');
       return;
     }
+    if (estimasiSelesai < tanggalMulai) {
+      alert('Estimasi selesai tidak boleh sebelum tanggal mulai.');
+      return;
+    }
+    const currentStatus = selected.statusPerawatan || 'Normal';
+    if (!isMaintenanceTransitionAllowed(currentStatus, status)) {
+      alert(`Transisi status ${currentStatus} ke ${status} tidak diizinkan.`);
+      return;
+    }
+    if (['Dalam Perbaikan', 'Selesai Diperbaiki'].includes(status) && ['Dipinjam', 'Terlambat'].includes(selected.statusPinjam)) {
+      alert('Item harus dikembalikan sebelum masuk proses perbaikan.');
+      return;
+    }
+    if (status === 'Dibatalkan' && !catatan.trim()) {
+      alert('Alasan pembatalan wajib ditulis pada catatan.');
+      return;
+    }
+    if (status === 'Tertunda' && !kendala.trim()) {
+      alert('Kendala wajib diisi saat perbaikan ditunda.');
+      return;
+    }
     if (isEksternal && !vendorId) {
       alert('Pilih vendor / tempat service untuk perbaikan eksternal');
       return;
     }
     if (isSelesai && (!tanggalSelesaiAktual || !lamaWaktuPerbaikan.trim())) {
       alert('Saat selesai, isi tanggal aktual selesai dan lama waktu perbaikan');
+      return;
+    }
+    if (isSelesai && tanggalSelesaiAktual < tanggalMulai) {
+      alert('Tanggal aktual selesai tidak boleh sebelum tanggal mulai.');
+      return;
+    }
+    if (isEksternal && tanggalKirim && tanggalDiterima && tanggalDiterima < tanggalKirim) {
+      alert('Tanggal diterima tidak boleh sebelum tanggal pengiriman.');
       return;
     }
 
@@ -798,6 +902,7 @@ export function MaintenanceFormModal({
       lamaWaktuPerbaikan: isSelesai ? lamaWaktuPerbaikan.trim() : null,
       catatan: catatan || '',
       kendala: kendala || '',
+      spareparts: spareparts.length > 0 ? spareparts : null,
       createdAt: new Date().toISOString(),
     };
 
@@ -812,7 +917,7 @@ export function MaintenanceFormModal({
             <h2 className="text-lg font-bold text-slate-900">Catat / Update Perbaikan</h2>
             <p className="text-xs text-slate-500 mt-0.5">Timeline, lokasi service, dokumen, dan log perawatan</p>
           </div>
-          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1 text-2xl leading-none">&times;</button>
+          <button type="button" onClick={onClose} aria-label="Tutup form perawatan" className="inline-flex size-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/30"><X size={18} /></button>
         </div>
 
         <div className="p-6 overflow-y-auto flex-1 space-y-5">
@@ -841,7 +946,7 @@ export function MaintenanceFormModal({
             <div>
               <label className={labelClass}>Status Perawatan *</label>
               <select value={status} onChange={(e) => setStatus(e.target.value)} className={fieldClass}>
-                {MAINTENANCE_STATUS_OPTIONS.map((s) => (
+                {MAINTENANCE_STATUS_OPTIONS.filter((s) => allowedStatuses.includes(s) || s === status).map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>
@@ -1012,6 +1117,103 @@ export function MaintenanceFormModal({
             />
           </div>
 
+          <div className="space-y-3 p-4 rounded-xl border border-sky-100 bg-sky-50/40">
+            <div className="flex items-center gap-2 text-sky-800">
+              <Package size={14} />
+              <span className="text-xs font-bold uppercase tracking-wide">Sparepart yang Digunakan</span>
+            </div>
+            <p className="text-[11px] text-slate-500">Pilih dari data inventory atau input manual sparepart yang digunakan saat perbaikan.</p>
+
+            <div className="flex flex-col sm:flex-row gap-2">
+              <select
+                value=""
+                onChange={(e) => { addSparepartFromAsset(e.target.value); e.target.value = ''; }}
+                className={`${fieldClass} sm:flex-1`}
+              >
+                <option value="">Pilih sparepart dari inventory...</option>
+                {sparepartOptions
+                  .filter((a) => !spareparts.some((s) => s.type === 'asset' && s.assetId === a.id))
+                  .map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.kode} — {a.nama} (stok: {a.stok ?? '-'})
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_80px_80px_auto] gap-2 items-end">
+              <div>
+                <label className="text-[10px] font-medium text-slate-500 mb-1 block">Atau Input Manual</label>
+                <input
+                  value={manualPartName}
+                  onChange={(e) => setManualPartName(e.target.value)}
+                  placeholder="Nama sparepart..."
+                  className={fieldClass}
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-medium text-slate-500 mb-1 block">Qty</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={manualPartQty}
+                  onChange={(e) => setManualPartQty(e.target.value)}
+                  className={fieldClass}
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-medium text-slate-500 mb-1 block">Satuan</label>
+                <select value={manualPartSatuan} onChange={(e) => setManualPartSatuan(e.target.value)} className={fieldClass}>
+                  <option value="Pcs">Pcs</option>
+                  <option value="Set">Set</option>
+                  <option value="Botol">Botol</option>
+                  <option value="Tube">Tube</option>
+                  <option value="Liter">Liter</option>
+                </select>
+              </div>
+              <button
+                type="button"
+                onClick={addManualSparepart}
+                disabled={!manualPartName.trim()}
+                className="h-11 inline-flex items-center justify-center gap-1.5 px-4 bg-sky-600 text-white text-xs font-semibold rounded-xl hover:bg-sky-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              >
+                <PlusCircle size={14} /> Tambah
+              </button>
+            </div>
+
+            {spareparts.length > 0 && (
+              <div className="space-y-2 mt-2">
+                {spareparts.map((s, idx) => (
+                  <div key={idx} className="flex items-center gap-3 p-2.5 bg-white rounded-xl border border-slate-200">
+                    <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold ${s.type === 'asset' ? 'bg-blue-100 text-blue-700' : 'bg-violet-100 text-violet-700'}`}>
+                      {s.type === 'asset' ? 'INV' : 'TXT'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-slate-800 truncate">{s.nama}</p>
+                      {s.kode && <p className="text-[10px] text-slate-500 font-mono">{s.kode}</p>}
+                      {s.catatan && <p className="text-[10px] text-slate-400 italic">{s.catatan}</p>}
+                    </div>
+                    {s.type === 'asset' ? (
+                      <input
+                        type="number"
+                        min="1"
+                        max={s.maxQty}
+                        value={s.qty}
+                        onChange={(e) => updateSparepartQty(idx, e.target.value)}
+                        className="w-16 h-8 px-2 border border-slate-200 rounded-lg text-xs text-center"
+                      />
+                    ) : (
+                      <span className="text-xs text-slate-600 tabular-nums">{s.qty} {s.satuan}</span>
+                    )}
+                    <button type="button" onClick={() => removeSparepart(idx)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Hapus">
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div>
             <label className={labelClass}>Foto Perbaikan</label>
             <div className="flex items-center gap-4 p-4 rounded-xl border border-dashed border-slate-300 bg-slate-50">
@@ -1025,12 +1227,12 @@ export function MaintenanceFormModal({
               <div className="flex-1">
                 <p className="text-xs text-slate-600">Dokumentasi kondisi / proses perbaikan</p>
                 <label className="inline-block mt-2 px-3 py-1.5 bg-orange-600 text-white text-xs font-semibold rounded-lg cursor-pointer hover:bg-orange-700">
-                  Pilih Foto
+                  <Camera size={13} className="inline mr-1.5" /> Pilih Foto
                   <input type="file" accept="image/*" onChange={handleFoto} className="hidden" />
                 </label>
                 {foto && (
-                  <button type="button" onClick={() => setFoto(null)} className="ml-2 text-xs text-red-600 font-medium">
-                    Hapus
+                  <button type="button" onClick={() => setFoto(null)} className="ml-2 inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50">
+                    <Trash2 size={12} /> Hapus
                   </button>
                 )}
               </div>
@@ -1043,7 +1245,7 @@ export function MaintenanceFormModal({
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs text-slate-600">Surat jalan, invoice, BA, atau file lain</p>
                 <label className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg cursor-pointer hover:bg-slate-100">
-                  <Paperclip size={12} /> Tambah File
+                  <FilePlus2 size={13} /> Tambah File
                   <input type="file" multiple onChange={handleAddDokumen} className="hidden" />
                 </label>
               </div>
@@ -1057,9 +1259,9 @@ export function MaintenanceFormModal({
                       <button
                         type="button"
                         onClick={() => setDokumenPendukung((prev) => prev.filter((_, i) => i !== idx))}
-                        className="text-red-500 font-medium shrink-0"
+                        className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 font-semibold text-red-600 transition-colors hover:bg-red-50"
                       >
-                        Hapus
+                        <Trash2 size={12} /> Hapus
                       </button>
                     </li>
                   ))}
@@ -1078,11 +1280,11 @@ export function MaintenanceFormModal({
         </div>
 
         <div className="px-6 py-4 border-t border-slate-200 flex justify-end gap-2 bg-slate-50 shrink-0">
-          <button type="button" onClick={onClose} className="px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-white">
-            Batal
+          <button type="button" onClick={onClose} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-400/30">
+            <X size={15} /> Batal
           </button>
-          <button type="button" onClick={handleSubmit} className="px-5 py-2.5 text-sm font-semibold bg-orange-600 text-white rounded-xl hover:bg-orange-700">
-            Simpan Perbaikan
+          <button type="button" onClick={handleSubmit} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-amber-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange-200 transition-all hover:-translate-y-0.5 hover:from-orange-700 hover:to-amber-600 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:ring-offset-2">
+            <Save size={16} /> Simpan Perbaikan
           </button>
         </div>
       </div>
@@ -1144,7 +1346,7 @@ export function MaintenanceLogModal({ asset, maintenanceLogs, onClose, onUpdate 
   );
 }
 
-export function MaintenanceView({ assets, maintenanceLogs, borrowLogs, onOpenForm, onViewLog }) {
+export function MaintenanceView({ assets, maintenanceLogs, onOpenForm, onViewLog }) {
   const [filterStatus, setFilterStatus] = useState('Semua');
   const [search, setSearch] = useState('');
 
@@ -1190,7 +1392,7 @@ export function MaintenanceView({ assets, maintenanceLogs, borrowLogs, onOpenFor
         <button
           type="button"
           onClick={() => onOpenForm(null)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-orange-600 text-white text-sm font-semibold rounded-xl hover:bg-orange-700 shadow-sm transition-all hover:-translate-y-0.5"
+          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-amber-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange-200 transition-all hover:-translate-y-0.5 hover:from-orange-700 hover:to-amber-600 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:ring-offset-2"
         >
           <Plus size={16} /> Catat Perbaikan
         </button>
@@ -1262,7 +1464,16 @@ export function MaintenanceView({ assets, maintenanceLogs, borrowLogs, onOpenFor
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {rows.map(({ asset, latest }) => (
-                  <tr key={asset.id} className="hover:bg-slate-50">
+                  <tr
+                    key={asset.id}
+                    onClick={() => onViewLog(asset)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') onViewLog(asset);
+                    }}
+                    tabIndex={0}
+                    className="hover:bg-slate-50 cursor-pointer focus:outline-none focus:bg-orange-50/60"
+                    title="Klik field mana pun untuk melihat detail perawatan"
+                  >
                     <td className="px-4 py-3 font-mono text-xs font-bold text-blue-600">{asset.kode}</td>
                     <td className="px-4 py-3 font-medium max-w-[180px] truncate">{asset.nama}</td>
                     <td className="px-4 py-3">
@@ -1281,23 +1492,23 @@ export function MaintenanceView({ assets, maintenanceLogs, borrowLogs, onOpenFor
                       <div>{lokasiLabel(latest)}</div>
                       <div className="text-slate-400">{latest?.estimasiSelesai || '-'}</div>
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="inline-flex border border-slate-200 rounded-lg overflow-hidden">
+                    <td className="px-4 py-3 text-right" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
+                      <div className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 p-1 shadow-sm">
                         <button
                           type="button"
                           onClick={() => onViewLog(asset)}
-                          className="p-2 text-slate-500 hover:bg-slate-50 border-r"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-2 text-xs font-semibold text-slate-600 shadow-sm transition-all hover:-translate-y-0.5 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-400/30"
                           title="Lihat Log"
                         >
-                          <Eye size={16} />
+                          <Eye size={15} /> <span className="hidden xl:inline">Detail</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => onOpenForm(asset)}
-                          className="p-2 text-orange-600 hover:bg-orange-50"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-orange-600 px-2.5 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-orange-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-orange-500/30"
                           title="Update Perbaikan"
                         >
-                          <Wrench size={16} />
+                          <Wrench size={15} /> <span className="hidden xl:inline">Update</span>
                         </button>
                       </div>
                     </td>
@@ -1375,9 +1586,9 @@ export function JadwalPerawatanTab({ asset, onSave }) {
         <button
           type="button"
           onClick={handleSave}
-          className="px-4 py-2.5 text-sm font-semibold bg-orange-600 text-white rounded-xl hover:bg-orange-700"
+          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-amber-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange-200 transition-all hover:-translate-y-0.5 hover:from-orange-700 hover:to-amber-600 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-orange-500/40 focus:ring-offset-2"
         >
-          Simpan Jadwal
+          <Save size={15} /> Simpan Jadwal
         </button>
       </div>
     </div>
